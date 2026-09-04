@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  account: one
+  plan: MyString
+  status: MyString
+  started_at: 2026-09-04 06:16:24
+  expires_at: 2026-09-04 06:16:24
+  payment_provider_ref: MyString
+
+two:
+  account: two
+  plan: MyString
+  status: MyString
+  started_at: 2026-09-04 06:16:24
+  expires_at: 2026-09-04 06:16:24
+  payment_provider_ref: MyString

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_000423) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_004847) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_000423) do
     t.index ["profile_id"], name: "index_profile_accesses_on_profile_id"
   end
 
+  create_table "profile_photos", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "profile_id", null: false
+    t.datetime "updated_at", null: false
+    t.string "url", null: false
+    t.index ["profile_id", "position"], name: "index_profile_photos_on_profile_id_and_position"
+    t.index ["profile_id"], name: "index_profile_photos_on_profile_id"
+  end
+
+  create_table "profile_prompts", force: :cascade do |t|
+    t.text "answer", null: false
+    t.datetime "created_at", null: false
+    t.bigint "profile_id", null: false
+    t.string "question", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id"], name: "index_profile_prompts_on_profile_id"
+  end
+
   create_table "profiles", force: :cascade do |t|
     t.text "bio"
     t.string "city"
@@ -115,6 +134,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_000423) do
     t.index ["denomination_id"], name: "index_profiles_on_denomination_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.string "payment_provider_ref"
+    t.string "plan", default: "free", null: false
+    t.datetime "started_at", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "status"], name: "index_subscriptions_on_account_id_and_status"
+    t.index ["account_id"], name: "index_subscriptions_on_account_id"
+  end
+
+  create_table "verifications", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.string "verification_type", null: false
+    t.datetime "verified_at"
+    t.index ["account_id", "verification_type"], name: "index_verifications_on_account_id_and_verification_type"
+    t.index ["account_id"], name: "index_verifications_on_account_id"
+  end
+
+  create_table "vouches", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "profile_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.string "voucher_name", null: false
+    t.string "voucher_role", null: false
+    t.index ["profile_id"], name: "index_vouches_on_profile_id"
+  end
+
   add_foreign_key "conversations", "matches"
   add_foreign_key "interests", "profiles", column: "receiver_profile_id"
   add_foreign_key "interests", "profiles", column: "sender_profile_id"
@@ -127,5 +180,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_000423) do
   add_foreign_key "messages", "conversations"
   add_foreign_key "profile_accesses", "accounts"
   add_foreign_key "profile_accesses", "profiles"
+  add_foreign_key "profile_photos", "profiles"
+  add_foreign_key "profile_prompts", "profiles"
   add_foreign_key "profiles", "denominations"
+  add_foreign_key "subscriptions", "accounts"
+  add_foreign_key "verifications", "accounts"
+  add_foreign_key "vouches", "profiles"
 end
