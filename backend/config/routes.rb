@@ -12,6 +12,9 @@ Rails.application.routes.draw do
           get :feed
         end
       end
+
+      resources :interests, only: [:index, :create]
+      resources :matches, only: [:index]
     end
   end
 end
