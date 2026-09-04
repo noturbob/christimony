@@ -15,6 +15,24 @@ Rails.application.routes.draw do
 
       resources :interests, only: [:index, :create]
       resources :matches, only: [:index]
+
+      resources :introductions, only: [:index] do
+        member do
+          post :accept
+          post :decline
+        end
+      end
+
+      resources :conversations, only: [:index, :create] do
+        resources :messages, only: [:index, :create]
+      end
+
+      resources :verifications, only: [:index, :create]
+      resources :profiles do
+        resources :vouches, only: [:index, :create]
+      end
+
+      resources :subscriptions, only: [:index, :create]
     end
   end
 end

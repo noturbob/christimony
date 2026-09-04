@@ -46,12 +46,39 @@ module Api
         interest.update!(status: "accepted")
         reciprocal.update!(status: "accepted")
 
-        Match.create!(
+        match = Match.create!(
           profile_a: interest.sender_profile,
           profile_b: interest.receiver_profile,
           match_type: determine_match_type(interest.sender_profile, interest.receiver_profile),
           matched_at: Time.current
         )
+
+        create_introduction_if_parent_match(match)
+        match
+      end
+
+      def create_introduction_if_parent_match(match)
+        return unless match.match_type == "parent"
+
+        ward_a = find_ward_for(match.profile_a)
+        ward_b = find_ward_for(match.profile_b)
+        return unless ward_a && ward_b
+
+        Introduction.create!(
+          parent_match: match,
+          ward_a: ward_a,
+          ward_b: ward_b,
+          status: "pending_both"
+        )
+      end
+
+      def find_ward_for(profile)
+        owner_access = ProfileAccess.find_by(profile_id: profile.id, role: "owner")
+        return nil unless owner_access
+
+        Profile.joins(:profile_accesses)
+               .where(profile_accesses: { account_id: owner_access.account_id })
+               .find_by(profile_type: "ward")
       end
 
       def determine_match_type(profile_a, profile_b)

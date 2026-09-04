@@ -17,6 +17,14 @@ class Introduction < ApplicationRecord
     end
   end
 
+  def decline!(ward)
+    unless ward.id == ward_a_id || ward.id == ward_b_id
+      raise ArgumentError, "this profile is not part of this introduction"
+    end
+
+    update!(status: "declined")
+  end
+
   private
 
   def advance_status(accepted_side:)
