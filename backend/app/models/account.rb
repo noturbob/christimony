@@ -7,6 +7,8 @@ class Account < ApplicationRecord
   has_many :subscriptions
 
   validates :account_type, presence: true, inclusion: { in: %w[individual parent] }
+  validates :email, uniqueness: true, allow_nil: true
+  validates :phone, uniqueness: true, allow_nil: true
   validate :email_or_phone_present
 
   private
