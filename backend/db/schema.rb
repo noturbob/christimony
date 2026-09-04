@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_235241) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_000423) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_235241) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_accounts_on_email", unique: true
     t.index ["phone"], name: "index_accounts_on_phone", unique: true
+  end
+
+  create_table "conversations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "match_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["match_id"], name: "index_conversations_on_match_id", unique: true
   end
 
   create_table "denominations", force: :cascade do |t|
@@ -66,6 +73,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_235241) do
     t.index ["profile_b_id"], name: "index_matches_on_profile_b_id"
   end
 
+  create_table "messages", force: :cascade do |t|
+    t.text "body", null: false
+    t.bigint "conversation_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "read_at"
+    t.integer "sender_account_id", null: false
+    t.datetime "sent_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["sender_account_id"], name: "index_messages_on_sender_account_id"
+  end
+
   create_table "profile_accesses", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "activated_at"
@@ -96,6 +115,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_235241) do
     t.index ["denomination_id"], name: "index_profiles_on_denomination_id"
   end
 
+  add_foreign_key "conversations", "matches"
   add_foreign_key "interests", "profiles", column: "receiver_profile_id"
   add_foreign_key "interests", "profiles", column: "sender_profile_id"
   add_foreign_key "introductions", "matches", column: "parent_match_id"
@@ -103,6 +123,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_235241) do
   add_foreign_key "introductions", "profiles", column: "ward_b_id"
   add_foreign_key "matches", "profiles", column: "profile_a_id"
   add_foreign_key "matches", "profiles", column: "profile_b_id"
+  add_foreign_key "messages", "accounts", column: "sender_account_id"
+  add_foreign_key "messages", "conversations"
   add_foreign_key "profile_accesses", "accounts"
   add_foreign_key "profile_accesses", "profiles"
   add_foreign_key "profiles", "denominations"
