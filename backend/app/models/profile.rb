@@ -1,0 +1,10 @@
+class Profile < ApplicationRecord
+  belongs_to :denomination, optional: true
+
+  has_many :profile_accesses
+  has_many :accounts, through: :profile_accesses
+
+  validates :name, presence: true
+  validates :profile_type, presence: true, inclusion: { in: %w[self ward] }
+  validates :status, presence: true, inclusion: { in: %w[active paused banned] }
+end

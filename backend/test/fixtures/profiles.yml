@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  denomination: one
+  profile_type: MyString
+  name: MyString
+  dob: 2026-09-04
+  gender: MyString
+  city: MyString
+  education: MyString
+  profession: MyString
+  bio: MyText
+  status: MyString
+
+two:
+  denomination: two
+  profile_type: MyString
+  name: MyString
+  dob: 2026-09-04
+  gender: MyString
+  city: MyString
+  education: MyString
+  profession: MyString
+  bio: MyText
+  status: MyString

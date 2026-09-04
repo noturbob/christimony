@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  parent_match: one
+  ward_a: 1
+  ward_b: 1
+  status: MyString
+
+two:
+  parent_match: two
+  ward_a: 1
+  ward_b: 1
+  status: MyString

@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  profile_a: 1
+  profile_b: 1
+  match_type: MyString
+  matched_at: 2026-09-04 05:15:43
+
+two:
+  profile_a: 1
+  profile_b: 1
+  match_type: MyString
+  matched_at: 2026-09-04 05:15:43
