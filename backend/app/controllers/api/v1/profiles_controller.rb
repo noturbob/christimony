@@ -10,6 +10,18 @@ module Api
         render json: profiles.map { |p| profile_json(p) }
       end
 
+      def feed
+        my_profile_ids = current_account.profiles.pluck(:id)
+
+        profiles = Profile.where(status: "active")
+                           .where.not(id: my_profile_ids)
+
+        profiles = profiles.where(city: params[:city]) if params[:city].present?
+        profiles = profiles.where(denomination_id: params[:denomination_id]) if params[:denomination_id].present?
+
+        render json: profiles.map { |p| profile_json(p) }
+      end
+
       def show
         render json: profile_json(@profile)
       end

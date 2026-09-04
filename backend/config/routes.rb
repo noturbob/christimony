@@ -7,7 +7,11 @@ Rails.application.routes.draw do
       post "login", to: "sessions#create"
       get "me", to: "accounts#me"
 
-      resources :profiles, only: [:index, :show, :create, :update]
+      resources :profiles, only: [:index, :show, :create, :update] do
+        collection do
+          get :feed
+        end
+      end
     end
   end
 end
