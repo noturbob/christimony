@@ -27,7 +27,7 @@ export default function NewProfilePage() {
     setSubmitting(true);
     try {
       await createProfile(token, { name, profile_type: profileType, city, bio });
-      router.push("/dashboard");
+      router.push("/profile");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create profile");
     } finally {

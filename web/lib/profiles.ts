@@ -1,5 +1,11 @@
 import { apiFetch } from "./api";
 
+export interface PhotoRef {
+  id: number;
+  url: string;
+  position: number;
+}
+
 export interface Profile {
   id: number;
   name: string;
@@ -12,6 +18,7 @@ export interface Profile {
   bio: string | null;
   status: string;
   denomination: string | null;
+  photos: PhotoRef[];
 }
 
 export interface ProfileSummary {
@@ -78,4 +85,21 @@ export function updateProfile(
 
 export function getMatches(token: string) {
   return apiFetch<Match[]>("/matches", { token });
+}
+
+export function uploadProfilePhoto(token: string, profileId: number, file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+  return apiFetch<PhotoRef>(`/profiles/${profileId}/photos`, {
+    method: "POST",
+    token,
+    body: formData,
+  });
+}
+
+export function deleteProfilePhoto(token: string, profileId: number, photoId: number) {
+  return apiFetch<void>(`/profiles/${profileId}/photos/${photoId}`, {
+    method: "DELETE",
+    token,
+  });
 }

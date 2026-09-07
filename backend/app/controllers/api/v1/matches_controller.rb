@@ -17,10 +17,19 @@ module Api
       def match_json(match)
         {
           id: match.id,
-          profile_a_id: match.profile_a_id,
-          profile_b_id: match.profile_b_id,
+          profile_a: profile_summary(match.profile_a),
+          profile_b: profile_summary(match.profile_b),
           match_type: match.match_type,
           matched_at: match.matched_at
+        }
+      end
+
+      def profile_summary(profile)
+        {
+          id: profile.id,
+          name: profile.name,
+          city: profile.city,
+          profile_type: profile.profile_type
         }
       end
     end

@@ -23,7 +23,7 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await signup(email, password, accountType);
-      router.push("/dashboard");
+      router.push("/discover");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
     } finally {

@@ -11,6 +11,8 @@ Rails.application.routes.draw do
         collection do
           get :feed
         end
+        resources :vouches, only: [:index, :create]
+        resources :photos, controller: "profile_photos", only: [:create, :destroy]
       end
 
       resources :interests, only: [:index, :create]

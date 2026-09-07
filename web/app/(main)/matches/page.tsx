@@ -56,7 +56,7 @@ export default function MatchesPage() {
       ) : matches.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="text-muted-foreground">No matches yet — keep browsing.</p>
-          <Link href="/feed" className="inline-block mt-4">
+          <Link href="/discover" className="inline-block mt-4">
             <Button className="rounded-full">Browse profiles</Button>
           </Link>
         </div>

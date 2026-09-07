@@ -1,10 +1,10 @@
 import { apiFetch } from "./api";
 
-export interface Conversation {
+export interface ConversationSummary {
   id: number;
   match_id: number;
-  profile_a_id: number;
-  profile_b_id: number;
+  other_profile: { id: number; name: string };
+  last_message: { body: string; sent_at: string } | null;
 }
 
 export interface Message {
@@ -17,11 +17,11 @@ export interface Message {
 }
 
 export function getConversations(token: string) {
-  return apiFetch<Conversation[]>("/conversations", { token });
+  return apiFetch<ConversationSummary[]>("/conversations", { token });
 }
 
 export function createConversation(token: string, matchId: number) {
-  return apiFetch<Conversation>("/conversations", {
+  return apiFetch<ConversationSummary>("/conversations", {
     method: "POST",
     token,
     body: { match_id: matchId },

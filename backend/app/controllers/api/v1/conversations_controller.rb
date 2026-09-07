@@ -9,7 +9,7 @@ module Api
         conversations = Conversation.joins(:match)
                                      .where("matches.profile_a_id IN (?) OR matches.profile_b_id IN (?)", my_profile_ids, my_profile_ids)
 
-        render json: conversations.map { |c| conversation_json(c) }
+        render json: conversations.map { |c| conversation_json(c, my_profile_ids) }
       end
 
       def create
@@ -21,17 +21,20 @@ module Api
         end
 
         conversation = Conversation.find_or_create_by!(match: match)
-        render json: conversation_json(conversation), status: :created
+        render json: conversation_json(conversation, my_profile_ids), status: :created
       end
 
       private
 
-      def conversation_json(conversation)
+      def conversation_json(conversation, my_profile_ids)
+        other_profile = my_profile_ids.include?(conversation.profile_a_id) ? conversation.profile_b : conversation.profile_a
+        last_message = conversation.messages.order(sent_at: :desc).first
+
         {
           id: conversation.id,
           match_id: conversation.match_id,
-          profile_a_id: conversation.profile_a_id,
-          profile_b_id: conversation.profile_b_id
+          other_profile: { id: other_profile.id, name: other_profile.name },
+          last_message: last_message && { body: last_message.body, sent_at: last_message.sent_at }
         }
       end
     end

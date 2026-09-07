@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { getProfile, updateProfile, Profile } from "@/lib/profiles";
+import { getProfile, updateProfile, uploadProfilePhoto, deleteProfilePhoto, Profile } from "@/lib/profiles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!loading && !account) router.push("/login");
@@ -60,6 +61,30 @@ export default function EditProfilePage() {
     }
   }
 
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!token || !e.target.files?.[0]) return;
+    setUploading(true);
+    try {
+      const photo = await uploadProfilePhoto(token, profileId, e.target.files[0]);
+      setProfile((prev) => (prev ? { ...prev, photos: [...prev.photos, photo] } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handlePhotoDelete(photoId: number) {
+    if (!token) return;
+    try {
+      await deleteProfilePhoto(token, profileId, photoId);
+      setProfile((prev) => (prev ? { ...prev, photos: prev.photos.filter((p) => p.id !== photoId) } : prev));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete photo");
+    }
+  }
+
   if (loading || loadingData) return <p className="p-8">Loading...</p>;
   if (!account || !profile) return null;
 
@@ -68,6 +93,32 @@ export default function EditProfilePage() {
       <div>
         <h1 className="font-display text-3xl">Edit profile</h1>
         <p className="text-muted-foreground mt-1">Keep {profile.name}&apos;s details up to date.</p>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-sm font-medium">Photos</p>
+        <div className="grid grid-cols-3 gap-2">
+          {[...profile.photos]
+            .sort((a, b) => a.position - b.position)
+            .map((photo) => (
+              <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden bg-secondary">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => handlePhotoDelete(photo.id)}
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          {profile.photos.length < 6 && (
+            <label className="aspect-square rounded-xl border border-dashed border-border flex items-center justify-center cursor-pointer text-2xl text-muted-foreground">
+              {uploading ? "..." : "+"}
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+            </label>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-card p-6">

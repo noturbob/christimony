@@ -49,9 +49,17 @@ module Api
         {
           id: introduction.id,
           parent_match_id: introduction.parent_match_id,
-          ward_a_id: introduction.ward_a_id,
-          ward_b_id: introduction.ward_b_id,
-          status: introduction.status
+          status: introduction.status,
+          ward_a: profile_summary(introduction.ward_a),
+          ward_b: profile_summary(introduction.ward_b)
+        }
+      end
+
+      def profile_summary(profile)
+        {
+          id: profile.id,
+          name: profile.name,
+          city: profile.city
         }
       end
     end
