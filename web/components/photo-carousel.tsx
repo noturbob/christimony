@@ -3,11 +3,22 @@
 import { useState, useRef } from "react";
 import { PhotoRef } from "@/lib/profiles";
 
-export function PhotoCarousel({ photos, fallbackLetter }: { photos: PhotoRef[]; fallbackLetter: string }) {
+const PLACEHOLDER_URL =
+  "https://www.lifewire.com/thmb/lWlCQDkZkvbWxKhkJZ6yjOJ_J4k=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/ScreenShot2020-04-20at10.03.23AM-d55387c4422940be9a4f353182bd778c.jpg";
+
+export function PhotoCarousel({
+  photos = [],
+  fallbackLetter,
+}: {
+  photos?: PhotoRef[];
+  fallbackLetter: string;
+}) {
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
 
-  const sorted = [...photos].sort((a, b) => a.position - b.position);
+  const sorted = photos.length > 0
+    ? [...photos].sort((a, b) => a.position - b.position)
+    : [{ id: -1, url: PLACEHOLDER_URL, position: 0 }];
 
   function handleTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -19,14 +30,6 @@ export function PhotoCarousel({ photos, fallbackLetter }: { photos: PhotoRef[]; 
     if (delta < -50 && index < sorted.length - 1) setIndex((i) => i + 1);
     if (delta > 50 && index > 0) setIndex((i) => i - 1);
     startX.current = null;
-  }
-
-  if (sorted.length === 0) {
-    return (
-      <div className="aspect-[4/5] bg-secondary flex items-center justify-center">
-        <span className="font-display text-7xl text-primary/30">{fallbackLetter}</span>
-      </div>
-    );
   }
 
   return (

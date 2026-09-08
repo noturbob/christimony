@@ -159,3 +159,6 @@ body {
 .font-display {
   font-family: var(--font-fraunces), serif;
 }
+.font-heading {
+  font-family: var(--font-fraunces), serif;
+}
