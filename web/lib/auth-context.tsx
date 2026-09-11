@@ -1,74 +1,84 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, ReactNode } from "react";
 import { apiFetch } from "./api";
 
-interface Account {
+export interface Account {
   id: number;
   email: string | null;
-  account_type?: string;
+  phone: string | null;
+  phone_verified_at: string | null;
+  account_type: string;
+  onboarding: { complete: boolean; profile_id: number | null };
 }
 
 interface AuthContextType {
   account: Account | null;
-  token: string | null;
+  /** True only while an explicit refresh()/login() call is in flight -- initial
+   * state comes from the server (see app/layout.tsx), so there's no boot-time
+   * loading flash on any page. */
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, accountType: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  /** Used by the phone OTP verify step, which authenticates directly against
+   * /auth/phone/verify rather than through login(). */
+  establishSession: (token: string, account: Account) => Promise<void>;
+  refresh: () => Promise<void>;
+  /** Seeds context state from a server-fetched account with no network call
+   * of its own -- see components/hydrate-auth.tsx. */
+  hydrate: (account: Account | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState<Account | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider({
+  children,
+  initialAccount = null,
+}: {
+  children: ReactNode;
+  initialAccount?: Account | null;
+}) {
+  const [account, setAccount] = useState<Account | null>(initialAccount);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      setToken(storedToken);
-      apiFetch<Account>("/me", { token: storedToken })
-        .then(setAccount)
-        .catch(() => {
-          localStorage.removeItem("token");
-          setToken(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+  const refresh = useCallback(async () => {
+    try {
+      const data = await apiFetch<Account>("/me");
+      setAccount(data);
+    } catch {
+      setAccount(null);
     }
   }, []);
 
+  const establishSession = useCallback(async (token: string, nextAccount: Account) => {
+    await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    setAccount(nextAccount);
+  }, []);
+
   async function login(email: string, password: string) {
-    const data = await apiFetch<{ token: string; account: Account }>("/login", {
-      method: "POST",
-      body: { email, password },
-    });
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setAccount(data.account);
+    setLoading(true);
+    try {
+      const data = await apiFetch<{ token: string; account: Account }>("/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      await establishSession(data.token, data.account);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function signup(email: string, password: string, accountType: string) {
-    const data = await apiFetch<{ token: string; account: Account }>("/signup", {
-      method: "POST",
-      body: { account: { email, password, account_type: accountType } },
-    });
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setAccount(data.account);
-  }
-
-  function logout() {
-    localStorage.removeItem("token");
-    setToken(null);
+  async function logout() {
+    await fetch("/api/auth/session", { method: "DELETE" });
     setAccount(null);
   }
 
   return (
-    <AuthContext.Provider value={{ account, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ account, loading, login, logout, establishSession, refresh, hydrate: setAccount }}>
       {children}
     </AuthContext.Provider>
   );

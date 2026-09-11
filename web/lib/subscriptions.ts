@@ -8,14 +8,13 @@ export interface Subscription {
   expires_at: string | null;
 }
 
-export function getSubscriptions(token: string) {
-  return apiFetch<Subscription[]>("/subscriptions", { token });
+export function getSubscriptions() {
+  return apiFetch<Subscription[]>("/subscriptions");
 }
 
-export function createSubscription(token: string, plan: string) {
+export function createSubscription(plan: string) {
   return apiFetch<Subscription>("/subscriptions", {
     method: "POST",
-    token,
     body: { plan },
   });
 }

@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getMyProfiles, Profile } from "@/lib/profiles";
 import { getIntroductions, acceptIntroduction, declineIntroduction, Introduction } from "@/lib/introductions";
 import { Button } from "@/components/ui/button";
 
 export default function IntroductionsPage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
 
   const [introductions, setIntroductions] = useState<Introduction[]>([]);
   const [myProfiles, setMyProfiles] = useState<Profile[]>([]);
@@ -18,21 +16,14 @@ export default function IntroductionsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
-
-  function loadAll() {
-    if (!token) return;
-    setLoadingData(true);
-    Promise.all([getIntroductions(token), getMyProfiles(token)])
+    if (!account) return;
+    Promise.all([getIntroductions(), getMyProfiles()])
       .then(([intros, profiles]) => {
         setIntroductions(intros);
         setMyProfiles(profiles);
       })
       .finally(() => setLoadingData(false));
-  }
-
-  useEffect(loadAll, [token]);
+  }, [account]);
 
   const myWardIds = new Set(myProfiles.filter((p) => p.profile_type === "ward").map((p) => p.id));
 
@@ -45,11 +36,10 @@ export default function IntroductionsPage() {
   }
 
   async function handleAccept(intro: Introduction) {
-    if (!token) return;
     setError("");
     setActingOn(intro.id);
     try {
-      const updated = await acceptIntroduction(token, intro.id, myWardIn(intro).id);
+      const updated = await acceptIntroduction(intro.id, myWardIn(intro).id);
       setIntroductions((prev) => prev.map((i) => (i.id === intro.id ? { ...i, status: updated.status } : i)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to accept");
@@ -59,11 +49,10 @@ export default function IntroductionsPage() {
   }
 
   async function handleDecline(intro: Introduction) {
-    if (!token) return;
     setError("");
     setActingOn(intro.id);
     try {
-      const updated = await declineIntroduction(token, intro.id, myWardIn(intro).id);
+      const updated = await declineIntroduction(intro.id, myWardIn(intro).id);
       setIntroductions((prev) => prev.map((i) => (i.id === intro.id ? { ...i, status: updated.status } : i)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to decline");
@@ -88,7 +77,6 @@ export default function IntroductionsPage() {
     return false;
   }
 
-  if (loading) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (

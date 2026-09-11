@@ -4,44 +4,34 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { getMatches, getMyProfiles, Match, Profile } from "@/lib/profiles";
+import { getMatches, Match } from "@/lib/profiles";
 import { createConversation } from "@/lib/conversations";
 import { Button } from "@/components/ui/button";
 
 export default function MatchesPage() {
-  const { account, token, loading } = useAuth();
+  const { account } = useAuth();
   const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
-  const [myProfileIds, setMyProfileIds] = useState<number[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [openingId, setOpeningId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
-
-  useEffect(() => {
-    if (!token) return;
-    Promise.all([getMatches(token), getMyProfiles(token)])
-      .then(([matchResults, profileResults]) => {
-        setMatches(matchResults);
-        setMyProfileIds(profileResults.map((p: Profile) => p.id));
-      })
+    if (!account) return;
+    getMatches()
+      .then(setMatches)
       .finally(() => setLoadingMatches(false));
-  }, [token]);
+  }, [account]);
 
   async function handleMessage(matchId: number) {
-    if (!token) return;
     setOpeningId(matchId);
     try {
-      const conversation = await createConversation(token, matchId);
+      const conversation = await createConversation(matchId);
       router.push(`/messages/${conversation.id}`);
-    } catch (err) {
+    } catch {
       setOpeningId(null);
     }
   }
 
-  if (loading) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (
@@ -63,12 +53,17 @@ export default function MatchesPage() {
       ) : (
         <div className="space-y-3">
           {matches.map((m) => {
-            const other = myProfileIds.includes(m.profile_a.id) ? m.profile_b : m.profile_a;
+            const other = m.my_profile_id === m.profile_a.id ? m.profile_b : m.profile_a;
             return (
               <div key={m.id} className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    <span className="font-display text-lg text-primary/50">{other.name.charAt(0)}</span>
+                  <div className="h-12 w-12 rounded-full bg-secondary overflow-hidden flex items-center justify-center shrink-0">
+                    {other.cover_photo_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={other.cover_photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="font-display text-lg text-primary/50">{other.name.charAt(0)}</span>
+                    )}
                   </div>
                   <div>
                     <p className="font-medium">{other.name}</p>

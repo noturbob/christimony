@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getSubscriptions, createSubscription, Subscription } from "@/lib/subscriptions";
 import { Button } from "@/components/ui/button";
@@ -13,32 +12,24 @@ const PLANS = [
 ];
 
 export default function SubscriptionPage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
-
-  function reload() {
-    if (!token) return;
-    getSubscriptions(token).then(setSubscriptions).finally(() => setLoadingData(false));
-  }
-
-  useEffect(reload, [token]);
+    if (!account) return;
+    getSubscriptions().then(setSubscriptions).finally(() => setLoadingData(false));
+  }, [account]);
 
   const activeSub = subscriptions.find((s) => s.status === "active");
 
   async function handleSubscribe(plan: string) {
-    if (!token) return;
     setError("");
     setSubscribing(plan);
     try {
-      const sub = await createSubscription(token, plan);
+      const sub = await createSubscription(plan);
       setSubscriptions((prev) => [...prev, sub]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to subscribe");
@@ -47,7 +38,6 @@ export default function SubscriptionPage() {
     }
   }
 
-  if (loading || loadingData) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (
@@ -55,7 +45,7 @@ export default function SubscriptionPage() {
       <div>
         <h1 className="font-display text-3xl">Membership</h1>
         <p className="text-muted-foreground mt-1">
-          {activeSub ? `You're on the ${activeSub.plan} plan.` : "Choose a plan to get started."}
+          {loadingData ? "Loading..." : activeSub ? `You're on the ${activeSub.plan} plan.` : "Choose a plan to get started."}
         </p>
       </div>
 
@@ -74,7 +64,7 @@ export default function SubscriptionPage() {
               <Button
                 className="rounded-full"
                 variant={isCurrent ? "secondary" : "default"}
-                disabled={isCurrent || subscribing === p.value}
+                disabled={isCurrent || subscribing === p.value || loadingData}
                 onClick={() => handleSubscribe(p.value)}
               >
                 {isCurrent ? "Current plan" : subscribing === p.value ? "..." : "Choose"}

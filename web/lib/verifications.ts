@@ -7,14 +7,13 @@ export interface Verification {
   verified_at: string | null;
 }
 
-export function getVerifications(token: string) {
-  return apiFetch<Verification[]>("/verifications", { token });
+export function getVerifications() {
+  return apiFetch<Verification[]>("/verifications");
 }
 
-export function createVerification(token: string, verificationType: string) {
+export function createVerification(verificationType: string) {
   return apiFetch<Verification>("/verifications", {
     method: "POST",
-    token,
     body: { verification_type: verificationType },
   });
 }

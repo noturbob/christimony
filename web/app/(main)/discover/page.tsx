@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { X, Heart } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -11,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { PhotoCarousel } from "@/components/photo-carousel";
 
 export default function DiscoverPage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
 
   const [myProfiles, setMyProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<number | null>(null);
@@ -25,23 +23,18 @@ export default function DiscoverPage() {
   const [matchOverlay, setMatchOverlay] = useState<Profile | null>(null);
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
-
-  useEffect(() => {
-    if (!token) return;
-    getMyProfiles(token).then((profiles) => {
+    if (!account) return;
+    getMyProfiles().then((profiles) => {
       setMyProfiles(profiles);
       if (profiles.length > 0) setActiveProfileId(profiles[0].id);
     });
-  }, [token]);
+  }, [account]);
 
   async function loadFeed() {
-    if (!token) return;
     setLoadingFeed(true);
     try {
-      const results = await getFeed(token, cityFilter ? { city: cityFilter } : undefined);
-      setQueue(results);
+      const page = await getFeed(cityFilter ? { city: cityFilter } : undefined);
+      setQueue(page.profiles);
       setIndex(0);
     } finally {
       setLoadingFeed(false);
@@ -49,17 +42,18 @@ export default function DiscoverPage() {
   }
 
   useEffect(() => {
-    if (token) loadFeed();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadFeed sets loading state before its fetch; this is the intentional initial-load-on-mount pattern
+    if (account) loadFeed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [account]);
 
   const current = queue[index];
 
   async function handleLike() {
-    if (!token || !activeProfileId || !current || acting) return;
+    if (!activeProfileId || !current || acting) return;
     setActing(true);
     try {
-      const result = await sendInterest(token, activeProfileId, current.id);
+      const result = await sendInterest(activeProfileId, current.id);
       if (result.match) {
         setMatchOverlay(current);
       } else {
@@ -82,7 +76,6 @@ export default function DiscoverPage() {
     setIndex((i) => i + 1);
   }
 
-  if (loading) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   if (myProfiles.length === 0) {
@@ -140,7 +133,7 @@ export default function DiscoverPage() {
         <p className="text-muted-foreground text-center py-20">Loading...</p>
       ) : !current ? (
         <div className="text-center py-20 space-y-3">
-          <p className="font-display text-xl">That's everyone for now</p>
+          <p className="font-display text-xl">That&apos;s everyone for now</p>
           <p className="text-muted-foreground text-sm">Check back soon, or try a different filter.</p>
         </div>
       ) : (
@@ -148,11 +141,21 @@ export default function DiscoverPage() {
           <PhotoCarousel photos={current.photos} fallbackLetter={current.name.charAt(0)} />
           <div className="p-6 space-y-4">
             <div>
-              <h2 className="font-display text-2xl">{current.name}</h2>
+              <h2 className="font-display text-2xl">
+                {current.name}
+                {current.age ? <span className="text-muted-foreground font-normal">, {current.age}</span> : null}
+              </h2>
               <p className="text-muted-foreground text-sm mt-1">
                 {[current.city, current.denomination, current.profession].filter(Boolean).join(" · ")}
               </p>
             </div>
+
+            {current.prompts.length > 0 && (
+              <div className="rounded-2xl bg-secondary/40 p-4">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{current.prompts[0].question}</p>
+                <p className="text-sm leading-relaxed font-display text-lg">{current.prompts[0].answer}</p>
+              </div>
+            )}
 
             {current.bio && (
               <div className="rounded-2xl bg-secondary/40 p-4">
@@ -193,7 +196,7 @@ export default function DiscoverPage() {
       {matchOverlay && (
         <div className="fixed inset-0 z-30 bg-primary text-primary-foreground flex flex-col items-center justify-center px-8 text-center gap-6">
           <Heart size={56} fill="currentColor" />
-          <h2 className="font-display text-4xl">It's a match!</h2>
+          <h2 className="font-display text-4xl">It&apos;s a match!</h2>
           <p className="opacity-80">You and {matchOverlay.name} liked each other.</p>
           <div className="flex flex-col gap-3 w-full max-w-xs mt-4">
             <Link href="/matches" onClick={closeOverlay}>

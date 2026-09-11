@@ -9,29 +9,23 @@ import { getMyProfiles, Profile } from "@/lib/profiles";
 import { Button } from "@/components/ui/button";
 
 export default function ProfileHubPage() {
-  const { account, token, loading, logout } = useAuth();
+  const { account, logout } = useAuth();
   const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
+    if (!account) return;
+    getMyProfiles().then(setProfiles).finally(() => setLoadingProfiles(false));
+  }, [account]);
 
-  useEffect(() => {
-    if (token) {
-      getMyProfiles(token).then(setProfiles).finally(() => setLoadingProfiles(false));
-    }
-  }, [token]);
-
-  if (loading) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (
     <div className="max-w-md mx-auto px-6 pt-10 pb-6 space-y-8">
       <div>
         <h1 className="font-display text-3xl">Profile</h1>
-        <p className="text-muted-foreground mt-1">{account.email}</p>
+        <p className="text-muted-foreground mt-1">{account.email ?? account.phone}</p>
       </div>
 
       <div className="space-y-3">
@@ -61,13 +55,19 @@ export default function ProfileHubPage() {
                 href={`/profiles/${p.id}/edit`}
                 className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4"
               >
-                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                  <span className="font-display text-lg text-primary/50">{p.name.charAt(0)}</span>
+                <div className="h-12 w-12 rounded-full bg-secondary overflow-hidden flex items-center justify-center shrink-0">
+                  {p.photos[0] ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={p.photos[0].thumb_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-display text-lg text-primary/50">{p.name.charAt(0)}</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">{p.name}</p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {p.profile_type} profile{p.city ? ` · ${p.city}` : ""}
+                    {p.status === "draft" ? " · draft" : ""}
                   </p>
                 </div>
                 <ChevronRight size={18} className="text-muted-foreground" />
@@ -88,7 +88,10 @@ export default function ProfileHubPage() {
           <ChevronRight size={18} className="text-muted-foreground" />
         </Link>
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            router.push("/login");
+          }}
           className="w-full flex items-center justify-between rounded-2xl border border-border bg-card p-4 text-destructive"
         >
           <span className="font-medium flex items-center gap-2"><LogOut size={16} /> Log out</span>

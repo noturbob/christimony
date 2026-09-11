@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getVerifications, createVerification, Verification } from "@/lib/verifications";
 import { Button } from "@/components/ui/button";
@@ -14,28 +13,20 @@ const TYPES: { value: string; label: string; description: string }[] = [
 ];
 
 export default function VerificationPage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [submittingType, setSubmittingType] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
-
-  function reload() {
-    if (!token) return;
-    getVerifications(token).then(setVerifications).finally(() => setLoadingData(false));
-  }
-
-  useEffect(reload, [token]);
+    if (!account) return;
+    getVerifications().then(setVerifications).finally(() => setLoadingData(false));
+  }, [account]);
 
   async function handleSubmit(type: string) {
-    if (!token) return;
     setSubmittingType(type);
     try {
-      const v = await createVerification(token, type);
+      const v = await createVerification(type);
       setVerifications((prev) => [...prev, v]);
     } finally {
       setSubmittingType(null);
@@ -48,7 +39,6 @@ export default function VerificationPage() {
     return matching.find((v) => v.status === "verified") ?? matching[matching.length - 1];
   }
 
-  if (loading || loadingData) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (
@@ -59,32 +49,36 @@ export default function VerificationPage() {
       </div>
 
       <div className="space-y-3">
-        {TYPES.map((t) => {
-          const status = statusFor(t.value);
-          return (
-            <div key={t.value} className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium">{t.label}</p>
-                <p className="text-sm text-muted-foreground">{t.description}</p>
+        {loadingData ? (
+          <p className="text-muted-foreground">Loading...</p>
+        ) : (
+          TYPES.map((t) => {
+            const status = statusFor(t.value);
+            return (
+              <div key={t.value} className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium">{t.label}</p>
+                  <p className="text-sm text-muted-foreground">{t.description}</p>
+                </div>
+                {status?.status === "verified" ? (
+                  <span className="text-sm text-primary font-medium shrink-0">Verified</span>
+                ) : status ? (
+                  <span className="text-sm text-muted-foreground shrink-0 capitalize">{status.status}</span>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="rounded-full shrink-0"
+                    size="sm"
+                    disabled={submittingType === t.value}
+                    onClick={() => handleSubmit(t.value)}
+                  >
+                    {submittingType === t.value ? "Submitting..." : "Start"}
+                  </Button>
+                )}
               </div>
-              {status?.status === "verified" ? (
-                <span className="text-sm text-primary font-medium shrink-0">Verified</span>
-              ) : status ? (
-                <span className="text-sm text-muted-foreground shrink-0 capitalize">{status.status}</span>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="rounded-full shrink-0"
-                  size="sm"
-                  disabled={submittingType === t.value}
-                  onClick={() => handleSubmit(t.value)}
-                >
-                  {submittingType === t.value ? "Submitting..." : "Start"}
-                </Button>
-              )}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );

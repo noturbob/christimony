@@ -8,18 +8,13 @@ export interface Vouch {
   status: string;
 }
 
-export function getVouches(token: string, profileId: number) {
-  return apiFetch<Vouch[]>(`/profiles/${profileId}/vouches`, { token });
+export function getVouches(profileId: number) {
+  return apiFetch<Vouch[]>(`/profiles/${profileId}/vouches`);
 }
 
-export function createVouch(
-  token: string,
-  profileId: number,
-  data: { voucher_name: string; voucher_role: string }
-) {
+export function createVouch(profileId: number, data: { voucher_name: string; voucher_role: string }) {
   return apiFetch<Vouch>(`/profiles/${profileId}/vouches`, {
     method: "POST",
-    token,
     body: data,
   });
 }
