@@ -18,14 +18,14 @@ export default function MessagesInboxPage() {
   if (!account) return null;
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-8">
-      <h1 className="font-display text-2xl mb-6">Messages</h1>
+    <div className="max-w-md mx-auto w-full px-6 py-12">
+      <h1 className="font-display text-4xl md:text-5xl mb-8">Messages</h1>
 
       {loadingData ? (
         <p className="text-muted-foreground text-center py-20">Loading...</p>
       ) : conversations.length === 0 ? (
-        <div className="text-center py-20 space-y-3">
-          <p className="text-muted-foreground text-sm">
+        <div className="text-center py-16 space-y-3">
+          <p className="text-muted-foreground text-base">
             No conversations yet — they start once you match with someone.
           </p>
         </div>

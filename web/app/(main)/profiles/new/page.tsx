@@ -37,10 +37,10 @@ export default function NewProfilePage() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-6 py-10 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Create a profile</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="max-w-md mx-auto w-full px-6 py-12 space-y-8">
+      <div className="space-y-2">
+        <h1 className="font-display text-4xl md:text-5xl">Create a profile</h1>
+        <p className="text-muted-foreground text-base">
           {account?.account_type === "parent"
             ? "For yourself, or on behalf of your child."
             : "Tell us a bit about yourself."}

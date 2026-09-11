@@ -42,22 +42,22 @@ export default function VerificationPage() {
   if (!account) return null;
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Verification</h1>
-        <p className="text-muted-foreground mt-1">Verified accounts are trusted more, and matched more often.</p>
+    <div className="max-w-2xl mx-auto w-full px-6 py-12 md:py-16 space-y-10 md:space-y-12">
+      <div className="text-center md:text-left space-y-3">
+        <h1 className="font-display text-4xl md:text-5xl">Verification</h1>
+        <p className="text-muted-foreground text-base md:text-lg">Verified accounts are trusted more, and matched more often.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {loadingData ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : (
           TYPES.map((t) => {
             const status = statusFor(t.value);
             return (
-              <div key={t.value} className="rounded-2xl border border-border bg-card p-5 flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium">{t.label}</p>
+              <div key={t.value} className="rounded-2xl border border-border bg-card p-6 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="font-medium text-base">{t.label}</p>
                   <p className="text-sm text-muted-foreground">{t.description}</p>
                 </div>
                 {status?.status === "verified" ? (
@@ -68,7 +68,6 @@ export default function VerificationPage() {
                   <Button
                     variant="outline"
                     className="rounded-full shrink-0"
-                    size="sm"
                     disabled={submittingType === t.value}
                     onClick={() => handleSubmit(t.value)}
                   >

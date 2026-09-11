@@ -15,9 +15,15 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   if (!account) redirect("/login");
 
   return (
-    <div className="min-h-screen pb-20">
+    // min-h-dvh (not min-h-screen/100vh) so mobile browser chrome doesn't
+    // leave the page shorter than the real viewport. The inner flex column
+    // centers whatever page renders here vertically when it's shorter than
+    // the screen (subscription, verification, empty states) -- content
+    // taller than the viewport just overflows and scrolls as normal, since
+    // justify-center only acts on the leftover space.
+    <div className="min-h-dvh flex flex-col">
       <HydrateAuth account={account} />
-      {children}
+      <div className="flex-1 flex flex-col justify-center pb-20">{children}</div>
       <BottomNav />
     </div>
   );

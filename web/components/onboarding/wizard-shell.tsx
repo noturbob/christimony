@@ -18,7 +18,7 @@ export function WizardShell({
   const progress = ((step + 1) / totalSteps) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <div className="sticky top-0 z-10 bg-background">
         <div className="max-w-md mx-auto w-full px-6 pt-6 pb-3 flex items-center gap-4">
           {onBack ? (

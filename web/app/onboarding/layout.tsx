@@ -11,7 +11,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
   if (!account) redirect("/login");
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       <HydrateAuth account={account} />
       {children}
     </div>
