@@ -5,14 +5,24 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "signup", to: "registrations#create"
       post "login", to: "sessions#create"
+      post "auth/phone/start", to: "phone_auth#start"
+      post "auth/phone/verify", to: "phone_auth#verify"
       get "me", to: "accounts#me"
+
+      get "denominations", to: "denominations#index"
+      get "prompt_questions", to: "prompt_questions#index"
 
       resources :profiles, only: [:index, :show, :create, :update] do
         collection do
           get :feed
         end
         resources :vouches, only: [:index, :create]
-        resources :photos, controller: "profile_photos", only: [:create, :destroy]
+        resources :prompts, controller: "profile_prompts", only: [:index, :create, :update, :destroy]
+        resources :photos, controller: "profile_photos", only: [:create, :destroy] do
+          collection do
+            patch :reorder
+          end
+        end
       end
 
       resources :interests, only: [:index, :create]
@@ -30,10 +40,6 @@ Rails.application.routes.draw do
       end
 
       resources :verifications, only: [:index, :create]
-      resources :profiles do
-        resources :vouches, only: [:index, :create]
-      end
-
       resources :subscriptions, only: [:index, :create]
     end
   end

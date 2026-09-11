@@ -1,6 +1,8 @@
 module Api
   module V1
     class IntroductionsController < BaseController
+      include ProfileSerialization
+
       before_action :authenticate_account!
       before_action :set_introduction, only: [:accept, :decline]
       before_action :set_ward_profile, only: [:accept, :decline]
@@ -52,14 +54,6 @@ module Api
           status: introduction.status,
           ward_a: profile_summary(introduction.ward_a),
           ward_b: profile_summary(introduction.ward_b)
-        }
-      end
-
-      def profile_summary(profile)
-        {
-          id: profile.id,
-          name: profile.name,
-          city: profile.city
         }
       end
     end

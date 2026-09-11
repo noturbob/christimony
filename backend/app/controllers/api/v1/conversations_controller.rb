@@ -1,6 +1,8 @@
 module Api
   module V1
     class ConversationsController < BaseController
+      include ProfileSerialization
+
       before_action :authenticate_account!
 
       def index
@@ -33,9 +35,17 @@ module Api
         {
           id: conversation.id,
           match_id: conversation.match_id,
-          other_profile: { id: other_profile.id, name: other_profile.name },
-          last_message: last_message && { body: last_message.body, sent_at: last_message.sent_at }
+          other_profile: profile_summary(other_profile),
+          last_message: last_message && { body: last_message.body, sent_at: last_message.sent_at },
+          unread_count: unread_count_for(conversation, my_profile_ids)
         }
+      end
+
+      def unread_count_for(conversation, my_profile_ids)
+        conversation.messages
+                    .where(read_at: nil)
+                    .where.not(sender_account_id: current_account.id)
+                    .count
       end
     end
   end

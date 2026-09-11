@@ -1,6 +1,8 @@
 module Api
   module V1
     class ProfilePhotosController < BaseController
+      include ProfileSerialization
+
       before_action :authenticate_account!
       before_action :set_profile
       before_action :authorize_access!
@@ -26,6 +28,23 @@ module Api
         head :no_content
       end
 
+      # PATCH /api/v1/profiles/:profile_id/photos/reorder
+      # Body: { order: [photo_id, photo_id, ...] }
+      def reorder
+        order = Array(params[:order]).map(&:to_i)
+        photos = @profile.profile_photos.where(id: order).index_by(&:id)
+
+        unless order.size == photos.size
+          return render json: { error: "order must include every photo id exactly once" }, status: :unprocessable_entity
+        end
+
+        ActiveRecord::Base.transaction do
+          order.each_with_index { |id, index| photos[id].update!(position: index) }
+        end
+
+        render json: @profile.reload.profile_photos.map { |p| photo_json(p) }
+      end
+
       private
 
       def set_profile
@@ -39,24 +58,6 @@ module Api
         has_access = current_account.profile_accesses.exists?(profile_id: @profile.id)
         render json: { error: "Forbidden" }, status: :forbidden unless has_access
       end
-         def profile_json(profile)
-          {
-            id: profile.id,
-            name: profile.name,
-            profile_type: profile.profile_type,
-            dob: profile.dob,
-            gender: profile.gender,
-            city: profile.city,
-            education: profile.education,
-            profession: profile.profession,
-            bio: profile.bio,
-            status: profile.status,
-            denomination: profile.denomination&.name,
-            photos: profile.profile_photos.map { |p|
-              { id: p.id, url: p.image.attached? ? rails_blob_url(p.image, host: request.base_url) : p.url, position: p.position }
-            }
-          }
-        end
     end
   end
 end
