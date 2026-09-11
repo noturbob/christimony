@@ -29,11 +29,11 @@ export function FamilySection() {
         className="pointer-events-none absolute inset-0 -z-10 opacity-35 [background-image:radial-gradient(rgba(250,246,239,0.26)_0.7px,transparent_0.7px)] [background-size:24px_24px]"
       />
 
-      <div className="mx-auto grid max-w-[1180px] gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-24">
+      <div className="mx-auto grid max-w-[1180px] gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start lg:gap-24">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }} variants={reveal}>
           <SectionEyebrow dark>Our signature difference</SectionEyebrow>
           <h2 data-testid="family-feature-headline" className="max-w-[580px] font-heading text-[clamp(3rem,5.8vw,5.5rem)] leading-[0.91] tracking-[-0.065em]">
-            Family-guided. <em className="font-normal text-[#f1c7b7]">Never family-decided.</em>
+            Family‑guided. <em className="font-normal text-[#f1c7b7]">Never family‑decided.</em>
           </h2>
           <div data-testid="family-feature-rule" className="mt-10 h-px w-24 bg-[#faf6ef]/40" />
         </motion.div>
@@ -43,9 +43,9 @@ export function FamilySection() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.25 }}
           variants={reveal}
-          className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-end"
+          className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-stretch"
         >
-          <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem]">
+          <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem] md:aspect-auto md:h-full md:min-h-[320px]">
             <Image
               data-testid="family-feature-image"
               src="/images/family-table.jpg"

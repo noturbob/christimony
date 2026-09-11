@@ -22,6 +22,7 @@ export function SiteHeader() {
   return (
     <header
       data-testid="site-header"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,box-shadow] duration-300 ${
         scrolled ? "bg-[#faf6ef]/90 shadow-[0_1px_0_rgba(27,27,24,0.08)] backdrop-blur-xl" : "bg-transparent"
       }`}
