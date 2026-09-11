@@ -112,10 +112,10 @@ export default function EditProfilePage() {
   if (!account || !profile) return null;
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Edit profile</h1>
-        <p className="text-muted-foreground mt-1">Keep {profile.name}&apos;s details up to date.</p>
+    <div className="max-w-2xl mx-auto w-full px-6 py-12 space-y-8">
+      <div className="space-y-2">
+        <h1 className="font-display text-4xl md:text-5xl">Edit profile</h1>
+        <p className="text-muted-foreground text-base">Keep {profile.name}&apos;s details up to date.</p>
       </div>
 
       {profile.status === "draft" && (

@@ -80,10 +80,10 @@ export default function IntroductionsPage() {
   if (!account) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Introductions</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="max-w-3xl mx-auto w-full px-6 py-12 md:py-16 space-y-10 md:space-y-12">
+      <div className="text-center md:text-left space-y-3">
+        <h1 className="font-display text-4xl md:text-5xl">Introductions</h1>
+        <p className="text-muted-foreground text-base md:text-lg">
           When you and another parent both express interest, your children are introduced here —
           nothing opens between them until they each say yes.
         </p>

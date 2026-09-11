@@ -41,27 +41,28 @@ export default function SubscriptionPage() {
   if (!account) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Membership</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="max-w-4xl mx-auto w-full px-6 py-12 md:py-16 space-y-10 md:space-y-14">
+      <div className="text-center md:text-left space-y-3">
+        <h1 className="font-display text-4xl md:text-5xl">Membership</h1>
+        <p className="text-muted-foreground text-base md:text-lg">
           {loadingData ? "Loading..." : activeSub ? `You're on the ${activeSub.plan} plan.` : "Choose a plan to get started."}
         </p>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-3 gap-6">
         {PLANS.map((p) => {
           const isCurrent = activeSub?.plan === p.value;
           return (
-            <div key={p.value} className={`rounded-2xl border p-6 flex flex-col gap-3 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
-              <div>
-                <h3 className="font-display text-xl">{p.name}</h3>
-                <p className="text-2xl font-medium mt-1">{p.price}</p>
+            <div key={p.value} className={`rounded-2xl border p-8 flex flex-col gap-4 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+              <div className="space-y-1.5">
+                <h3 className="font-display text-2xl">{p.name}</h3>
+                <p className="text-3xl font-medium">{p.price}</p>
               </div>
-              <p className="text-sm text-muted-foreground flex-1">{p.blurb}</p>
+              <p className="text-base text-muted-foreground flex-1 leading-relaxed">{p.blurb}</p>
               <Button
+                size="lg"
                 className="rounded-full"
                 variant={isCurrent ? "secondary" : "default"}
                 disabled={isCurrent || subscribing === p.value || loadingData}
