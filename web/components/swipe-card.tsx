@@ -45,7 +45,19 @@ export function SwipeCard({
       onDragEnd={handleDragEnd}
       className={className}
     >
-      {children}
+      {/* A second, non-transformed clipping layer -- Chromium doesn't
+          reliably clip rounded corners on an element that also has a
+          `transform` (this motion.div always has one, even at rest, since
+          framer-motion sets `x`/`rotate` unconditionally), which showed up
+          as small square slivers poking past the rounded corners. This
+          inner div inherits the same radius but carries no transform of
+          its own, so its clip renders correctly and covers the outer
+          element's bleed. It also doubles as the card's single scroll
+          region, so longer profiles scroll in place instead of growing
+          the card. */}
+      <div className="h-full overflow-y-auto overscroll-contain rounded-[inherit] scroll-fade-b">
+        {children}
+      </div>
       <motion.div
         style={{ opacity: likeOpacity }}
         className="pointer-events-none absolute top-8 left-6 -rotate-12 rounded-lg border-4 border-primary px-3 py-1 font-display text-2xl font-bold text-primary"
