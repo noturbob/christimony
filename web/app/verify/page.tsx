@@ -180,7 +180,7 @@ function VerifyForm() {
 
 export default function VerifyPage() {
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-dvh grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
         <span className="font-display text-2xl">Christimony</span>
         <div>

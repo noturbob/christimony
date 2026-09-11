@@ -1,6 +1,4 @@
 class Account < ApplicationRecord
-  has_secure_password validations: false
-
   has_many :profile_accesses
   has_many :profiles, through: :profile_accesses
   has_many :verifications
@@ -11,9 +9,9 @@ class Account < ApplicationRecord
   validates :account_type, presence: true, inclusion: { in: %w[individual parent] }
   validates :email, uniqueness: true, allow_nil: true
   validates :phone, uniqueness: true, allow_nil: true
-  validates :password, length: { minimum: 6 }, allow_nil: true
-  validate :email_or_phone_present
-  validate :password_or_verified_phone_present
+  validates :oauth_uid, uniqueness: { scope: :oauth_provider }, allow_nil: true
+  validate :identity_present
+  validate :credential_present
 
   private
 
@@ -24,18 +22,18 @@ class Account < ApplicationRecord
     self.phone = parsed.valid? ? parsed.e164 : phone
   end
 
-  def email_or_phone_present
-    if email.blank? && phone.blank?
-      errors.add(:base, "must provide either an email or a phone number")
+  def identity_present
+    if email.blank? && phone.blank? && oauth_uid.blank?
+      errors.add(:base, "must provide an email, a phone number, or a connected account")
     end
   end
 
-  # An account can exist with no password at all as long as it was created
-  # via phone OTP (phone_verified_at set). Accounts created via the
-  # email/password flow must set a password.
-  def password_or_verified_phone_present
-    if password_digest.blank? && phone_verified_at.blank?
-      errors.add(:base, "must set a password or verify a phone number")
+  # Accounts are only ever created via phone OTP or OAuth (Google/Apple) --
+  # there is no email/password signup, so one of those two proofs of
+  # identity must be present.
+  def credential_present
+    if phone_verified_at.blank? && oauth_uid.blank?
+      errors.add(:base, "must verify a phone number or connect a Google/Apple account")
     end
   end
 end

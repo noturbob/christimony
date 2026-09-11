@@ -14,14 +14,10 @@ export interface Account {
 
 interface AuthContextType {
   account: Account | null;
-  /** True only while an explicit refresh()/login() call is in flight -- initial
-   * state comes from the server (see app/layout.tsx), so there's no boot-time
-   * loading flash on any page. */
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  /** Used by the phone OTP verify step, which authenticates directly against
-   * /auth/phone/verify rather than through login(). */
+  /** Used by the phone OTP and OAuth (Google/Apple) sign-in flows, which
+   * authenticate directly against their own endpoints and hand back a
+   * token + account to establish a session with. */
   establishSession: (token: string, account: Account) => Promise<void>;
   refresh: () => Promise<void>;
   /** Seeds context state from a server-fetched account with no network call
@@ -39,7 +35,6 @@ export function AuthProvider({
   initialAccount?: Account | null;
 }) {
   const [account, setAccount] = useState<Account | null>(initialAccount);
-  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -59,26 +54,13 @@ export function AuthProvider({
     setAccount(nextAccount);
   }, []);
 
-  async function login(email: string, password: string) {
-    setLoading(true);
-    try {
-      const data = await apiFetch<{ token: string; account: Account }>("/login", {
-        method: "POST",
-        body: { email, password },
-      });
-      await establishSession(data.token, data.account);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function logout() {
     await fetch("/api/auth/session", { method: "DELETE" });
     setAccount(null);
   }
 
   return (
-    <AuthContext.Provider value={{ account, loading, login, logout, establishSession, refresh, hydrate: setAccount }}>
+    <AuthContext.Provider value={{ account, logout, establishSession, refresh, hydrate: setAccount }}>
       {children}
     </AuthContext.Provider>
   );

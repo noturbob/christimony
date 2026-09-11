@@ -2,7 +2,7 @@ require "test_helper"
 
 class VerificationTest < ActiveSupport::TestCase
   def setup
-    @account = Account.create!(email: "test@example.com", password: "password123", account_type: "individual")
+    @account = Account.create!(email: "test@example.com", account_type: "individual", oauth_provider: "google", oauth_uid: "verification-1")
   end
 
   test "valid with a recognized type and status" do

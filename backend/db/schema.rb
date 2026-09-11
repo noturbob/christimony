@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_11_140002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_12_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,11 +18,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_140002) do
     t.string "account_type", default: "individual", null: false
     t.datetime "created_at", null: false
     t.string "email"
-    t.string "password_digest"
+    t.string "oauth_provider"
+    t.string "oauth_uid"
     t.string "phone"
     t.datetime "phone_verified_at"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_accounts_on_email", unique: true
+    t.index ["oauth_provider", "oauth_uid"], name: "index_accounts_on_oauth_provider_and_oauth_uid", unique: true
     t.index ["phone"], name: "index_accounts_on_phone", unique: true
   end
 

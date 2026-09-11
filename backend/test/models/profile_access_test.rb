@@ -2,7 +2,7 @@ require "test_helper"
 
 class ProfileAccessTest < ActiveSupport::TestCase
   def setup
-    @account = Account.create!(email: "test@example.com", password: "password123", account_type: "individual")
+    @account = Account.create!(email: "test@example.com", account_type: "individual", oauth_provider: "google", oauth_uid: "profile-access-1")
     @profile = Profile.create!(name: "Test", profile_type: "self", status: "active")
   end
 

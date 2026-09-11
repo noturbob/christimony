@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
+import { OAuthButtons } from "@/components/oauth-buttons";
 
 function normalizeDigits(value: string) {
   return value.replace(/\D/g, "").slice(0, 10);
@@ -38,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-dvh grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
         <span className="font-display text-2xl">Christimony</span>
         <div>
@@ -57,7 +58,7 @@ export default function LoginPage() {
 
           <div>
             <h1 className="font-display text-3xl">Welcome back</h1>
-            <p className="text-muted-foreground mt-1">Enter your phone number to continue.</p>
+            <p className="text-muted-foreground mt-1">Continue with your phone number or a connected account.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,11 +85,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground text-center">
-            <Link href="/login/email" className="text-primary underline underline-offset-4">
-              Use email and password instead
-            </Link>
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <OAuthButtons />
 
           <p className="text-sm text-muted-foreground text-center">
             New here?{" "}

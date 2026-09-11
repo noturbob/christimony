@@ -2,9 +2,9 @@ require "test_helper"
 
 class MessageTest < ActiveSupport::TestCase
   def setup
-    @account_a = Account.create!(email: "a@example.com", password: "password123", account_type: "individual")
-    @account_b = Account.create!(email: "b@example.com", password: "password123", account_type: "individual")
-    @stranger = Account.create!(email: "stranger@example.com", password: "password123", account_type: "individual")
+    @account_a = Account.create!(email: "a@example.com", account_type: "individual", oauth_provider: "google", oauth_uid: "msg-a")
+    @account_b = Account.create!(email: "b@example.com", account_type: "individual", oauth_provider: "google", oauth_uid: "msg-b")
+    @stranger = Account.create!(email: "stranger@example.com", account_type: "individual", oauth_provider: "google", oauth_uid: "msg-stranger")
 
     @profile_a = Profile.create!(name: "A", profile_type: "self", status: "active")
     @profile_b = Profile.create!(name: "B", profile_type: "self", status: "active")
