@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { Wordmark } from "./shared";
+import { ArrowGlyph, MenuGlyph } from "./icons";
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -65,7 +65,7 @@ export function SiteHeader() {
               scrolled ? "bg-[#24463b] text-[#faf6ef]" : "bg-[#faf6ef] text-[#24463b]"
             }`}
           >
-            Get started <ArrowUpRight className="ml-1 inline size-3.5" />
+            Get started <ArrowGlyph className="ml-1 inline size-3.5" />
           </Link>
         </div>
 
@@ -77,7 +77,7 @@ export function SiteHeader() {
           onClick={() => setMobileOpen(!mobileOpen)}
           className={`grid size-10 place-items-center rounded-full md:hidden ${scrolled ? "text-[#1b1b18]" : "text-[#faf6ef]"}`}
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          <MenuGlyph open={mobileOpen} className="size-4" />
         </button>
       </nav>
 
@@ -106,7 +106,7 @@ export function SiteHeader() {
                 onClick={closeMobile}
                 className="rounded-full bg-[#24463b] px-5 py-3 text-center font-semibold text-[#faf6ef]"
               >
-                Get started <ArrowUpRight className="ml-1 inline size-4" />
+                Get started <ArrowGlyph className="ml-1 inline size-4" />
               </Link>
             </div>
           </motion.div>

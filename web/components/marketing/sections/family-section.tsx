@@ -4,8 +4,8 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { SectionEyebrow, reveal } from "../shared";
+import { ArrowGlyph } from "../icons";
 
 export function FamilySection() {
   const reduceMotion = useReducedMotion();
@@ -45,7 +45,7 @@ export function FamilySection() {
           variants={reveal}
           className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-end"
         >
-          <div className="overflow-hidden rounded-[1.7rem]">
+          <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem]">
             <Image
               data-testid="family-feature-image"
               src="/images/family-table.jpg"
@@ -53,13 +53,13 @@ export function FamilySection() {
               width={1264}
               height={848}
               loading="lazy"
-              className="aspect-[1.15] w-full object-cover transition duration-500 hover:scale-105"
+              className="h-full w-full object-cover transition duration-500 hover:scale-105"
             />
           </div>
 
           <div>
             <p data-testid="family-feature-description" className="font-heading text-[2rem] leading-[1.05] tracking-[-0.045em]">
-              Invite the people who know you best to help open a door — while you keep the key.
+              Invite the people who know you best to help open a door, while you keep the key.
             </p>
             <p data-testid="family-feature-supporting-copy" className="mt-6 text-sm leading-6 text-[#faf6ef]/70">
               A parent or trusted family member can guide a profile and suggest an introduction. But before a
@@ -71,7 +71,7 @@ export function FamilySection() {
               href="/signup"
               className="mt-7 inline-flex items-center rounded-full border border-[#faf6ef]/40 px-5 py-3 text-sm font-semibold transition duration-200 hover:-translate-y-1 hover:border-[#faf6ef]"
             >
-              Explore the idea <ArrowUpRight className="ml-2 size-4" />
+              Explore the idea <ArrowGlyph className="ml-2 size-4" />
             </Link>
           </div>
         </motion.div>
