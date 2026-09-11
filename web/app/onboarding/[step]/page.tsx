@@ -215,184 +215,186 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
   return (
     <WizardShell step={index} totalSteps={STEPS.length} onBack={index > 0 ? goBack : undefined}>
       <div className="flex-1 flex flex-col">
-        {step === "account-type" && (
-          <StepFrame title="Who is this for?">
-            <div className="space-y-3">
-              <OptionCard
-                label="Myself"
-                description="I'm creating my own profile."
-                selected={draft.accountType === "individual"}
-                onClick={() => update("accountType", "individual")}
-              />
-              <OptionCard
-                label="My child"
-                description="I'm a parent helping guide my child's search."
-                selected={draft.accountType === "parent"}
-                onClick={() => update("accountType", "parent")}
-              />
-            </div>
-          </StepFrame>
-        )}
-
-        {step === "name" && (
-          <StepFrame title="What's your name?">
-            <Input
-              autoFocus
-              value={draft.name}
-              onChange={(e) => update("name", e.target.value)}
-              placeholder="Full name"
-              className="h-14 text-lg rounded-2xl"
-            />
-          </StepFrame>
-        )}
-
-        {step === "dob" && (
-          <StepFrame title="When were you born?">
-            <Input
-              type="date"
-              autoFocus
-              value={draft.dob}
-              onChange={(e) => update("dob", e.target.value)}
-              className="h-14 text-lg rounded-2xl"
-            />
-            {draft.dob && !isAdult(draft.dob) && (
-              <p className="text-sm text-destructive mt-2">You must be 18 or older to join Christimony.</p>
-            )}
-          </StepFrame>
-        )}
-
-        {step === "gender" && (
-          <StepFrame title="I am...">
-            <div className="space-y-3">
-              <OptionCard label="Male" selected={draft.gender === "male"} onClick={() => update("gender", "male")} />
-              <OptionCard label="Female" selected={draft.gender === "female"} onClick={() => update("gender", "female")} />
-            </div>
-          </StepFrame>
-        )}
-
-        {step === "denomination" && (
-          <StepFrame title="What's your denomination?" subtitle="Optional, but helps us match you well.">
-            <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-1">
-              {denominations.map((d) => (
+        <div className="flex-1 flex flex-col justify-center">
+          {step === "account-type" && (
+            <StepFrame title="Who is this for?">
+              <div className="space-y-3">
                 <OptionCard
-                  key={d.id}
-                  label={d.name}
-                  compact
-                  selected={draft.denominationId === d.id}
-                  onClick={() => {
-                    update("denominationId", d.id);
-                    update("denominationName", d.name);
-                  }}
+                  label="Myself"
+                  description="I'm creating my own profile."
+                  selected={draft.accountType === "individual"}
+                  onClick={() => update("accountType", "individual")}
                 />
-              ))}
-            </div>
-          </StepFrame>
-        )}
-
-        {step === "city" && (
-          <StepFrame title="Where are you based?">
-            <Input
-              autoFocus
-              value={draft.city}
-              onChange={(e) => update("city", e.target.value)}
-              placeholder="City"
-              className="h-14 text-lg rounded-2xl"
-            />
-          </StepFrame>
-        )}
-
-        {step === "education" && (
-          <StepFrame title="Education & work" subtitle="Optional — you can always add this later.">
-            <div className="space-y-4">
+                <OptionCard
+                  label="My child"
+                  description="I'm a parent helping guide my child's search."
+                  selected={draft.accountType === "parent"}
+                  onClick={() => update("accountType", "parent")}
+                />
+              </div>
+            </StepFrame>
+          )}
+  
+          {step === "name" && (
+            <StepFrame title="What's your name?">
               <Input
-                value={draft.education}
-                onChange={(e) => update("education", e.target.value)}
-                placeholder="Education"
-                className="h-12 rounded-xl"
+                autoFocus
+                value={draft.name}
+                onChange={(e) => update("name", e.target.value)}
+                placeholder="Full name"
+                className="h-14 text-lg rounded-2xl"
               />
+            </StepFrame>
+          )}
+  
+          {step === "dob" && (
+            <StepFrame title="When were you born?">
               <Input
-                value={draft.profession}
-                onChange={(e) => update("profession", e.target.value)}
-                placeholder="Profession"
-                className="h-12 rounded-xl"
+                type="date"
+                autoFocus
+                value={draft.dob}
+                onChange={(e) => update("dob", e.target.value)}
+                className="h-14 text-lg rounded-2xl"
               />
-            </div>
-          </StepFrame>
-        )}
-
-        {step === "photos" && (
-          <StepFrame title="Add your photos" subtitle={`At least ${MIN_PHOTOS} photos help people take your profile seriously.`}>
-            <label className="aspect-[4/5] w-full max-w-[220px] mx-auto rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 cursor-pointer text-muted-foreground">
-              <span className="text-3xl">{uploading ? "…" : "+"}</span>
-              <span className="text-sm">{uploading ? "Uploading..." : "Add a photo"}</span>
-              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
-            </label>
-            <p className="text-center text-sm text-muted-foreground mt-4">{draft.photoCount} of {MIN_PHOTOS} minimum added</p>
-          </StepFrame>
-        )}
-
-        {step === "prompts" && (
-          <StepFrame title="Answer 3 prompts" subtitle="These show up on your profile — pick ones that feel like you.">
-            <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
-              {questionBank.map((q) => {
-                const selected = draft.selectedQuestions.includes(q);
-                return (
-                  <div key={q} className={`rounded-2xl border p-4 space-y-2 ${selected ? "border-primary bg-primary/5" : "border-border"}`}>
-                    <button
-                      type="button"
-                      onClick={() => toggleQuestion(q)}
-                      className="text-left text-sm font-medium w-full"
-                      disabled={!selected && draft.selectedQuestions.length >= REQUIRED_PROMPTS}
-                    >
-                      {q}
-                    </button>
-                    {selected && (
-                      <Textarea
-                        autoFocus
-                        value={draft.answers[q] ?? ""}
-                        onChange={(e) => update("answers", { ...draft.answers, [q]: e.target.value })}
-                        placeholder="Your answer"
-                        rows={2}
-                        className="rounded-xl"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-center text-sm text-muted-foreground mt-3">{draft.selectedQuestions.length} of {REQUIRED_PROMPTS} selected</p>
-          </StepFrame>
-        )}
-
-        {step === "bio" && (
-          <StepFrame title="Tell your story" subtitle="A few sentences about you and what you're looking for.">
-            <Textarea
-              autoFocus
-              value={draft.bio}
-              onChange={(e) => update("bio", e.target.value)}
-              rows={6}
-              className="rounded-2xl"
-              placeholder="I'm someone who..."
-            />
-          </StepFrame>
-        )}
-
-        {step === "review" && (
-          <StepFrame title="Ready to go" subtitle="Here's what people will see first.">
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
-              <p className="font-display text-xl">{draft.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {[draft.city, draft.denominationName, draft.profession].filter(Boolean).join(" · ")}
-              </p>
-              <p className="text-sm text-muted-foreground">{draft.photoCount} photos · {draft.selectedQuestions.length} prompts</p>
-              {draft.bio && <p className="text-sm pt-2 border-t border-border">{draft.bio}</p>}
-            </div>
-          </StepFrame>
-        )}
+              {draft.dob && !isAdult(draft.dob) && (
+                <p className="text-sm text-destructive mt-2">You must be 18 or older to join Christimony.</p>
+              )}
+            </StepFrame>
+          )}
+  
+          {step === "gender" && (
+            <StepFrame title="I am...">
+              <div className="space-y-3">
+                <OptionCard label="Male" selected={draft.gender === "male"} onClick={() => update("gender", "male")} />
+                <OptionCard label="Female" selected={draft.gender === "female"} onClick={() => update("gender", "female")} />
+              </div>
+            </StepFrame>
+          )}
+  
+          {step === "denomination" && (
+            <StepFrame title="What's your denomination?" subtitle="Optional, but helps us match you well.">
+              <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-1">
+                {denominations.map((d) => (
+                  <OptionCard
+                    key={d.id}
+                    label={d.name}
+                    compact
+                    selected={draft.denominationId === d.id}
+                    onClick={() => {
+                      update("denominationId", d.id);
+                      update("denominationName", d.name);
+                    }}
+                  />
+                ))}
+              </div>
+            </StepFrame>
+          )}
+  
+          {step === "city" && (
+            <StepFrame title="Where are you based?">
+              <Input
+                autoFocus
+                value={draft.city}
+                onChange={(e) => update("city", e.target.value)}
+                placeholder="City"
+                className="h-14 text-lg rounded-2xl"
+              />
+            </StepFrame>
+          )}
+  
+          {step === "education" && (
+            <StepFrame title="Education & work" subtitle="Optional — you can always add this later.">
+              <div className="space-y-4">
+                <Input
+                  value={draft.education}
+                  onChange={(e) => update("education", e.target.value)}
+                  placeholder="Education"
+                  className="h-12 rounded-xl"
+                />
+                <Input
+                  value={draft.profession}
+                  onChange={(e) => update("profession", e.target.value)}
+                  placeholder="Profession"
+                  className="h-12 rounded-xl"
+                />
+              </div>
+            </StepFrame>
+          )}
+  
+          {step === "photos" && (
+            <StepFrame title="Add your photos" subtitle={`At least ${MIN_PHOTOS} photos help people take your profile seriously.`}>
+              <label className="aspect-[4/5] w-full max-w-[220px] mx-auto rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 cursor-pointer text-muted-foreground">
+                <span className="text-3xl">{uploading ? "…" : "+"}</span>
+                <span className="text-sm">{uploading ? "Uploading..." : "Add a photo"}</span>
+                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+              </label>
+              <p className="text-center text-sm text-muted-foreground mt-4">{draft.photoCount} of {MIN_PHOTOS} minimum added</p>
+            </StepFrame>
+          )}
+  
+          {step === "prompts" && (
+            <StepFrame title="Answer 3 prompts" subtitle="These show up on your profile — pick ones that feel like you.">
+              <div className="space-y-3 max-h-[26rem] overflow-y-auto pr-1">
+                {questionBank.map((q) => {
+                  const selected = draft.selectedQuestions.includes(q);
+                  return (
+                    <div key={q} className={`rounded-2xl border p-4 space-y-2 ${selected ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <button
+                        type="button"
+                        onClick={() => toggleQuestion(q)}
+                        className="text-left text-sm font-medium w-full"
+                        disabled={!selected && draft.selectedQuestions.length >= REQUIRED_PROMPTS}
+                      >
+                        {q}
+                      </button>
+                      {selected && (
+                        <Textarea
+                          autoFocus
+                          value={draft.answers[q] ?? ""}
+                          onChange={(e) => update("answers", { ...draft.answers, [q]: e.target.value })}
+                          placeholder="Your answer"
+                          rows={2}
+                          className="rounded-xl"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-center text-sm text-muted-foreground mt-3">{draft.selectedQuestions.length} of {REQUIRED_PROMPTS} selected</p>
+            </StepFrame>
+          )}
+  
+          {step === "bio" && (
+            <StepFrame title="Tell your story" subtitle="A few sentences about you and what you're looking for.">
+              <Textarea
+                autoFocus
+                value={draft.bio}
+                onChange={(e) => update("bio", e.target.value)}
+                rows={6}
+                className="rounded-2xl"
+                placeholder="I'm someone who..."
+              />
+            </StepFrame>
+          )}
+  
+          {step === "review" && (
+            <StepFrame title="Ready to go" subtitle="Here's what people will see first.">
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
+                <p className="font-display text-xl">{draft.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {[draft.city, draft.denominationName, draft.profession].filter(Boolean).join(" · ")}
+                </p>
+                <p className="text-sm text-muted-foreground">{draft.photoCount} photos · {draft.selectedQuestions.length} prompts</p>
+                {draft.bio && <p className="text-sm pt-2 border-t border-border">{draft.bio}</p>}
+              </div>
+            </StepFrame>
+          )}
+        </div>
 
         {error && <p className="text-sm text-destructive mt-4">{error}</p>}
 
-        <div className="mt-auto pt-8">
+        <div className="pt-8">
           <Button
             className="w-full rounded-full h-12 text-base"
             disabled={!canContinue || submitting}

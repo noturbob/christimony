@@ -136,11 +136,11 @@ export default function DiscoverPage() {
   if (myProfiles.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[70vh] px-8 text-center">
-        <div className="max-w-sm space-y-4">
-          <h1 className="font-display text-2xl">One step first</h1>
-          <p className="text-muted-foreground">Create a profile before you start browsing.</p>
+        <div className="max-w-sm space-y-5">
+          <h1 className="font-display text-3xl">One step first</h1>
+          <p className="text-muted-foreground text-base">Create a profile before you start browsing.</p>
           <Link href="/profiles/new">
-            <Button className="rounded-full">Create a profile</Button>
+            <Button size="lg" className="rounded-full">Create a profile</Button>
           </Link>
         </div>
       </div>
@@ -148,9 +148,9 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 pt-8">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="font-display text-2xl">Discover</h1>
+    <div className="max-w-md mx-auto w-full px-4 py-10">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-display text-4xl md:text-5xl">Discover</h1>
         <div className="flex items-center gap-2">
           {myProfiles.length > 1 && (
             <select
@@ -188,14 +188,27 @@ export default function DiscoverPage() {
         <SkeletonCard />
       ) : !current ? (
         <div className="text-center py-20 space-y-3">
-          <p className="font-display text-xl">That&apos;s everyone for now</p>
-          <p className="text-muted-foreground text-sm">Check back soon, or try a different filter.</p>
+          <p className="font-display text-2xl">That&apos;s everyone for now</p>
+          <p className="text-muted-foreground text-base">Check back soon, or try a different filter.</p>
         </div>
       ) : (
-        <div className="relative" style={{ minHeight: 560 }}>
+        // A fixed frame instead of one that grows with content -- that way
+        // the like/pass buttons below always sit in the same place, no
+        // matter how much bio/prompt/education text a profile has. Each
+        // card scrolls its own content internally (see SwipeCard) rather
+        // than stretching the page.
+        //
+        // Both cards split "transform" (position/scale) from "rounded
+        // corners + clipping" across two nested elements -- Chromium
+        // doesn't reliably clip rounded corners on a transformed element,
+        // so the outer div here only handles the scale/offset, and the
+        // inner one (no transform of its own) does the actual rounding.
+        <div className="relative h-[70vh] min-h-[460px] max-h-[640px]">
           {next && (
-            <div className="absolute inset-0 rounded-3xl border border-border bg-card overflow-hidden shadow-sm scale-[0.96] translate-y-2 opacity-70">
-              <ProfileCardBody profile={next} />
+            <div className="absolute inset-0 scale-[0.96] translate-y-2">
+              <div className="h-full rounded-3xl border border-border bg-card shadow-sm opacity-70 overflow-hidden">
+                <ProfileCardBody profile={next} />
+              </div>
             </div>
           )}
           <AnimatePresence>
@@ -203,7 +216,7 @@ export default function DiscoverPage() {
               key={current.id}
               onSwiped={(direction) => (direction === "like" ? performLike() : performPass())}
               disabled={acting}
-              className="absolute inset-0 rounded-3xl border border-border bg-card overflow-hidden shadow-sm cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 rounded-3xl border border-border bg-card shadow-sm cursor-grab active:cursor-grabbing"
             >
               <ProfileCardBody profile={current} />
             </SwipeCard>
