@@ -3,10 +3,10 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      post "signup", to: "registrations#create"
-      post "login", to: "sessions#create"
       post "auth/phone/start", to: "phone_auth#start"
       post "auth/phone/verify", to: "phone_auth#verify"
+      post "auth/google", to: "oauth#google"
+      post "auth/apple", to: "oauth#apple"
       get "me", to: "accounts#me"
 
       get "denominations", to: "denominations#index"

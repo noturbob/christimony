@@ -3,41 +3,43 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth, type Account } from "@/lib/auth-context";
-import { apiFetch } from "@/lib/api";
+import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { OAuthButtons } from "@/components/oauth-buttons";
+
+function normalizeDigits(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
 
 export default function SignupPage() {
-  const { establishSession } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [accountType, setAccountType] = useState("individual");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (phone.length !== 10) {
+      setError("Enter a 10-digit phone number");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const data = await apiFetch<{ token: string; account: Account }>("/signup", {
-        method: "POST",
-        body: { account: { email, password, account_type: accountType } },
-      });
-      await establishSession(data.token, data.account);
-      router.push("/onboarding/account-type");
+      const res = await startPhoneAuth(phone);
+      const devParam = res.dev_code ? `&dev=${res.dev_code}` : "";
+      router.push(`/verify?phone=${phone}${devParam}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="min-h-dvh grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
         <span className="font-display text-2xl">Christimony</span>
         <div>
@@ -61,41 +63,39 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accountType">I am signing up as</Label>
-              <select
-                id="accountType"
-                value={accountType}
-                onChange={(e) => setAccountType(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="individual">Myself</option>
-                <option value="parent">A parent, on behalf of my child</option>
-              </select>
+              <label htmlFor="phone" className="text-sm font-medium">Phone number</label>
+              <div className="flex items-center rounded-full border border-input bg-background overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+                <span className="pl-4 pr-2 text-sm text-muted-foreground border-r border-input py-2.5">+91</span>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="98765 43210"
+                  value={phone}
+                  onChange={(e) => setPhone(normalizeDigits(e.target.value))}
+                  className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none"
+                  required
+                />
+              </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full rounded-full" disabled={submitting}>
-              {submitting ? "Creating account..." : "Sign up"}
+              {submitting ? "Sending code..." : "Send code"}
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground text-center">
-            Prefer your phone number?{" "}
-            <Link href="/login" className="text-primary underline underline-offset-4">
-              Sign up with phone instead
-            </Link>
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <OAuthButtons />
 
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{" "}
-            <Link href="/login/email" className="text-primary underline underline-offset-4">
+            <Link href="/login" className="text-primary underline underline-offset-4">
               Log in
             </Link>
           </p>
