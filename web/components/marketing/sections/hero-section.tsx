@@ -4,16 +4,15 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { ensureGsapRegistered, gsap, SplitText } from "@/lib/gsap";
 import { SectionEyebrow } from "../shared";
+import { ArrowGlyph } from "../icons";
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
-  const imageWrapRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
@@ -23,25 +22,22 @@ export function HeroSection() {
 
   useGSAP(
     () => {
-      if (reduceMotion) return;
+      if (reduceMotion || !headlineRef.current) return;
       ensureGsapRegistered();
 
       const split = SplitText.create(headlineRef.current, {
         type: "lines",
         mask: "lines",
         linesClass: "line",
+        autoSplit: true,
+        onSplit: (self) => {
+          return gsap.fromTo(
+            self.lines,
+            { yPercent: 110 },
+            { yPercent: 0, duration: 1, ease: "power4.out", stagger: 0.09, delay: 0.35 }
+          );
+        },
       });
-
-      gsap.set(split.lines, { yPercent: 110 });
-      gsap
-        .timeline({ delay: 0.35 })
-        .to(split.lines, { yPercent: 0, duration: 1, ease: "power4.out", stagger: 0.09 })
-        .fromTo(
-          imageWrapRef.current,
-          { clipPath: "inset(12% 12% 12% 12% round 1.7rem)", scale: 1.08 },
-          { clipPath: "inset(0% 0% 0% 0% round 1.7rem)", scale: 1, duration: 1.2, ease: "power3.out" },
-          0.15
-        );
 
       return () => split.revert();
     },
@@ -76,7 +72,7 @@ export function HeroSection() {
             data-testid="hero-headline"
             className="max-w-[700px] font-heading text-[clamp(3.3rem,7.4vw,5.8rem)] leading-[0.94] tracking-[-0.065em]"
           >
-            Marriage, sought with intention — <em className="font-normal text-[#e6b9a9]">not swiped past.</em>
+            Marriage, sought with intention. <em className="font-normal text-[#e6b9a9]">Not swiped past.</em>
           </h1>
 
           <p data-testid="hero-subheadline" className="mt-7 max-w-[520px] text-[17px] leading-7 text-[#faf6ef]/72">
@@ -90,7 +86,7 @@ export function HeroSection() {
               href="/signup"
               className="inline-flex items-center justify-center rounded-full bg-[#faf6ef] px-6 py-3.5 text-sm font-semibold text-[#24463b] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-xl"
             >
-              Begin your search <ArrowUpRight className="ml-2 size-4" />
+              Begin your search <ArrowGlyph className="ml-2 size-4" />
             </Link>
 
             <Link
@@ -98,12 +94,11 @@ export function HeroSection() {
               href="#how-it-works"
               className="inline-flex items-center justify-center rounded-full border border-[#faf6ef]/40 px-6 py-3.5 text-sm font-semibold text-[#faf6ef] transition duration-200 hover:-translate-y-1 hover:border-[#faf6ef]"
             >
-              See how it works <ArrowDown className="ml-2 size-4" />
+              See how it works <ArrowGlyph direction="down" className="ml-2 size-4" />
             </Link>
           </div>
 
-          <div data-testid="hero-trust-note" className="mt-8 flex items-center gap-2 text-xs text-[#faf6ef]/55">
-            <ShieldCheck size={15} />
+          <div data-testid="hero-trust-note" className="mt-8 text-xs text-[#faf6ef]/55">
             Intentions first. Privacy always.
           </div>
         </motion.div>
@@ -116,7 +111,7 @@ export function HeroSection() {
         >
           <div className="absolute -inset-3 rounded-[2rem] border border-[#faf6ef]/20" />
 
-          <div ref={imageWrapRef} className="overflow-hidden rounded-[1.7rem] shadow-2xl">
+          <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem] shadow-2xl">
             <Image
               data-testid="hero-couple-image"
               src="/images/hero-couple.jpg"
@@ -124,7 +119,7 @@ export function HeroSection() {
               width={1264}
               height={848}
               preload
-              className="aspect-[1.18] w-full object-cover"
+              className="h-full w-full object-cover"
             />
           </div>
 

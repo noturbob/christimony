@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
 import { SectionEyebrow, reveal } from "../shared";
 import { MagneticLink } from "../magnetic-link";
+import { ArrowGlyph } from "../icons";
 
 export function FinalCtaSection() {
   return (
@@ -20,7 +20,7 @@ export function FinalCtaSection() {
           href="/signup"
           className="mt-10 inline-flex items-center rounded-full bg-[#faf6ef] px-7 py-4 text-sm font-semibold text-[#24463b] transition-colors duration-200 hover:bg-white hover:shadow-xl"
         >
-          Get started with Christimony <ArrowUpRight className="ml-2 size-4" />
+          Get started with Christimony <ArrowGlyph className="ml-2 size-4" />
         </MagneticLink>
       </motion.div>
     </section>

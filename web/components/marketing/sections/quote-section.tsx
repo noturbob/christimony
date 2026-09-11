@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { Sparkles } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { ensureGsapRegistered, gsap, SplitText } from "@/lib/gsap";
+import { DiamondGlyph } from "../icons";
 
 export function QuoteSection() {
   const quoteRef = useRef<HTMLQuoteElement>(null);
@@ -36,7 +36,7 @@ export function QuoteSection() {
   return (
     <section data-testid="denomination-quote-section" className="border-y border-[#e2dacb] bg-[#e2dacb]/45 px-5 py-24 text-center lg:py-36">
       <div className="mx-auto max-w-[980px]">
-        <Sparkles data-testid="quote-sparkle-icon" className="mx-auto mb-7 size-5 text-[#7a2e2e]" />
+        <DiamondGlyph data-testid="quote-sparkle-icon" className="mx-auto mb-7 size-3.5 text-[#7a2e2e]" />
 
         <blockquote
           ref={quoteRef}

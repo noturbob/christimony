@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown } from "lucide-react";
 import { SectionEyebrow, faqs, reveal } from "../shared";
+import { PlusMinusGlyph } from "../icons";
 
 export function FaqSection() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -37,11 +37,11 @@ export function FaqSection() {
                   <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[#7a2e2e] transition-transform duration-300 group-hover:scale-x-100" />
                 </span>
                 <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full border border-[#e2dacb] transition duration-200 ${
-                    isOpen ? "rotate-180 bg-[#24463b] text-[#faf6ef]" : "text-[#7a2e2e]"
+                  className={`grid size-8 shrink-0 place-items-center rounded-full border border-[#e2dacb] transition-colors duration-200 ${
+                    isOpen ? "bg-[#24463b] text-[#faf6ef]" : "text-[#7a2e2e]"
                   }`}
                 >
-                  <ChevronDown size={16} />
+                  <PlusMinusGlyph open={isOpen} className="size-3.5" />
                 </span>
               </button>
 

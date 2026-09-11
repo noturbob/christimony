@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
 import type { Variants } from "motion/react";
 
 export const reveal: Variants = {
@@ -84,8 +83,10 @@ export function Wordmark({ light = false, testId }: { light?: boolean; testId: s
       href="/"
       className={`flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.03em] ${light ? "text-[#faf6ef]" : "text-[#1b1b18]"}`}
     >
-      <span className={`grid size-8 place-items-center rounded-full ${light ? "bg-[#faf6ef] text-[#24463b]" : "bg-[#24463b] text-[#faf6ef]"}`}>
-        <Heart size={15} fill="currentColor" strokeWidth={1.5} />
+      <span
+        className={`grid size-8 place-items-center rounded-full font-display text-[15px] leading-none ${light ? "bg-[#faf6ef] text-[#24463b]" : "bg-[#24463b] text-[#faf6ef]"}`}
+      >
+        C
       </span>
       Christimony
     </Link>

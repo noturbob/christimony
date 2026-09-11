@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ArrowUpRight, Check } from "lucide-react";
 import { SectionEyebrow, comparisonRows, reveal } from "../shared";
+import { ArrowGlyph, CheckGlyph } from "../icons";
 
 export function PositioningSection() {
   return (
@@ -46,7 +46,7 @@ export function PositioningSection() {
               Christimony
             </span>
             <span className="grid size-7 place-items-center rounded-full bg-[#faf6ef] text-[#24463b]">
-              <Check size={15} />
+              <CheckGlyph className="size-3.5" />
             </span>
           </div>
 
@@ -60,7 +60,7 @@ export function PositioningSection() {
                 <span data-testid={`comparison-mainstream-${index + 1}`} className="text-sm leading-5 text-[#faf6ef]/45">
                   {left}
                 </span>
-                <ArrowUpRight className="size-4 text-[#e6b9a9]" />
+                <ArrowGlyph className="size-4 text-[#e6b9a9]" />
                 <span data-testid={`comparison-christimony-${index + 1}`} className="font-heading text-[1.55rem] leading-none tracking-[-0.04em]">
                   {right}
                 </span>

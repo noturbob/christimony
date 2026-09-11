@@ -15,17 +15,23 @@ export function SiteFooter() {
     ensureGsapRegistered();
 
     const ctx = gsap.context(() => {
+      // A scrubbed tween (progress tied to scroll position) doesn't work
+      // here: this is the last element on the page, so there's often too
+      // little scroll room left after it comes into view for the scrub
+      // to ever reach 100% -- it was getting stuck mid-reveal. A one-shot
+      // tween with its own fixed duration, played once on entry, always
+      // completes regardless of how much scroll room remains.
       gsap.fromTo(
         bigWordRef.current,
-        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 50% 0 50%)" },
         {
-          clipPath: "inset(0 0% 0 0)",
-          ease: "none",
+          clipPath: "inset(0 0% 0 0%)",
+          duration: 1.1,
+          ease: "power3.out",
           scrollTrigger: {
             trigger: bigWordRef.current,
             start: "top 95%",
-            end: "top 45%",
-            scrub: 0.6,
+            toggleActions: "play none none none",
           },
         }
       );
@@ -68,7 +74,7 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <div className="mt-14 overflow-hidden border-t border-[#faf6ef]/10 pt-8">
+        <div className="mt-14 overflow-hidden border-t border-[#faf6ef]/10 pt-8 text-center">
           <div ref={bigWordRef} className="font-display text-[clamp(3rem,13vw,11rem)] leading-[0.85] tracking-[-0.05em] text-[#faf6ef] select-none">
             Christimony
           </div>
