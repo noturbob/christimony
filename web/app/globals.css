@@ -91,11 +91,24 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* `viewport-fit=cover` (see app/layout.tsx) extends the page under the
+   * iOS notch/home-indicator and Android gesture-bar safe areas instead of
+   * letterboxing around them. Nothing paints those strips by default,
+   * though -- only `html` and `body`'s own boxes do, and `html` had no
+   * background of its own, so the browser's canvas (white) showed through
+   * at the very top/bottom and during overscroll, breaking the illusion
+   * that the cream background is one continuous surface. Both elements
+   * now carry the theme background and stretch to the full dynamic
+   * viewport height, so there's no seam anywhere regardless of how tall a
+   * given page's content is.
+   */
+  html {
+    @apply bg-background font-sans;
+    min-height: 100dvh;
+  }
   body {
     @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
+    min-height: 100dvh;
   }
 }
 
