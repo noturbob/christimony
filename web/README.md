@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Christimony — Web
+
+The Next.js frontend for Christimony, a Hinge/Bumble-style matrimony platform for Christians. Talks to the Rails API in `../backend` over JSON.
+
+**Note on Next.js version:** this project is on **Next.js 16**, which has real breaking changes from earlier versions (`middleware.ts` → `proxy.ts`, async `params`/`cookies()`/`headers()`, etc.). If you're working on this codebase, read `node_modules/next/dist/docs/` before assuming a pattern from an older version still applies — see `AGENTS.md`.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, Turbopack), React 19, TypeScript
+- **Styling:** Tailwind CSS v4 (CSS-first config, no `tailwind.config.*`) + shadcn (`base-nova` style, on `@base-ui/react`, not Radix)
+- **In-app animation:** [`motion`](https://motion.dev) (Framer Motion's successor) — swipe gestures, layout transitions, accordions
+- **Marketing-page animation:** GSAP 3.15 (`ScrollTrigger`, `SplitText`) + [Lenis](https://lenis.darkroom.engineering) smooth scroll
+- **Auth:** httpOnly cookie session, proxied to the Rails API by this app's own route handlers (see below) — no token ever reaches client JS
 
 ## Getting Started
 
-First, run the development server:
+The Rails API must be running first (see `../backend/README.md`; defaults to `http://localhost:3000`):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev   # http://localhost:3000 collides with Rails' default port — see below
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+By convention this project's dev server runs on **3001** locally (`PORT=3001 npm run dev`), matching the Rails CORS default — though since Phase 2 the browser no longer talks to Rails directly (see Architecture below), so CORS mostly only matters if you're hitting the Rails API directly (e.g. with curl) rather than through this app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`.env.local` (gitignored) is only needed to point at a non-default Rails API:
 
-## Learn More
+```bash
+API_BASE_URL=http://localhost:3000/api/v1
+```
 
-To learn more about Next.js, take a look at the following resources:
+This is a **server-only** variable (no `NEXT_PUBLIC_` prefix) — it's read by Next.js route handlers and Server Components, never inlined into client JS. On Vercel, set it to the deployed Rails API's URL (Production and Preview environments both need it).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture: cookie + BFF auth
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The frontend does not hold a JWT in `localStorage` or any other place client JS can read. Instead:
 
-## Deploy on Vercel
+1. `lib/session.ts` defines an httpOnly, `SameSite=Lax` cookie (`christimony_session`) that holds the raw Rails JWT.
+2. `app/api/auth/session/route.ts` sets/clears that cookie — called right after a successful login/signup/OTP-verify.
+3. `app/api/bff/[...path]/route.ts` is a proxy: every client-side API call goes to same-origin `/api/bff/*`, which attaches the cookie's token as `Authorization: Bearer <token>` and forwards to Rails. A `401` from Rails clears the cookie automatically. This is also why the browser never needs Rails' CORS configuration — it only ever talks to itself.
+4. `proxy.ts` (Next 16's renamed `middleware.ts`) redirects unauthenticated requests to app routes → `/login`, and authenticated requests to `/login`/`/verify`/`/signup` → `/discover`, entirely server-side (no client-side flash).
+5. `(main)/layout.tsx` and `onboarding/layout.tsx` fetch the account **once**, server-side (`lib/server-api.ts`, which calls Rails directly — no BFF hop needed since it already has the cookie), and hydrate it into `AuthContext` via `components/hydrate-auth.tsx`. Every page under those layouts can just call `useAuth()` and trust the account is there — no more per-page `loading` + `redirect-if-missing` boilerplate.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`lib/api.ts` is the client-side fetch wrapper (always through `/api/bff`); `lib/server-api.ts` is the server-side one (direct to Rails). Both fail closed — a network error is treated as "not logged in" rather than crashing the page.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Route map
+
+```
+app/
+  page.tsx                    "/"        marketing landing page (static prerender)
+  login/page.tsx               "/login"                phone number entry
+  login/email/page.tsx         "/login/email"          email+password fallback
+  verify/page.tsx               "/verify"               6-digit OTP entry
+  signup/page.tsx                "/signup"               email+password signup (also phone-first via /login)
+  onboarding/[step]/page.tsx    "/onboarding/:step"     11-step profile-creation wizard
+  (main)/                                                the tabbed app shell (bottom nav), session-gated
+    discover/                   "/discover"             swipeable card stack
+    matches/                    "/matches"
+    messages/, messages/[id]/    "/messages", "/messages/:id"
+    introductions/               "/introductions"        parent/ward introduction flow
+    profile/                     "/profile"              account hub
+    profiles/new/, profiles/[id]/, profiles/[id]/edit/
+    subscription/, verification/
+  api/
+    auth/session/route.ts        POST sets the session cookie, DELETE clears it
+    bff/[...path]/route.ts       proxies every other API call to Rails
+```
+
+`app/login`, `app/signup`, and `app/verify` stay static (`○` in the build output) since they read no request-time API; everything under `(main)/` and `app/onboarding/` is dynamic (`ƒ`) since their layouts read the session cookie. Verify this with `npm run build` after any auth-related change — the route table at the end of the build output is the source of truth.
+
+## Design tokens
+
+`app/globals.css` holds one `:root` with the brand palette (cream/forest-green/maroon/sand/ink), a fluid `clamp()` type scale, and a shared motion vocabulary (`--ease-out-expo`, `--ease-spring`, `--dur-fast/base/slow/slower`) that both `motion` and GSAP animations pull from, so in-app and marketing-page motion don't invent their own timing per component.
+
+## Marketing page (`app/page.tsx`)
+
+Composed from `components/marketing/`:
+
+- `lenis-provider.tsx` — smooth scroll, synced to GSAP's `ScrollTrigger`
+- `preloader.tsx` — wordmark + counter, once per browser session
+- `site-header.tsx`, `site-footer.tsx`, `marquee.tsx`, `magnetic-link.tsx` — shared chrome
+- `sections/*.tsx` — one file per section (hero, positioning, quote, how-it-works, family, faq, final-cta)
+
+Notable choreography: a masked line-by-line headline reveal on the hero (GSAP `SplitText` + `mask: "lines"`), a word-by-word opacity scrub on the denomination quote, and a pinned horizontal scroll through the three "how it works" steps on desktop (`gsap.matchMedia("(min-width: 1024px)")` — mobile gets a plain vertical stack instead, and everything degrades to instant, un-animated final states under `prefers-reduced-motion: reduce`).
+
+Hero and family images live in `public/images/` and are served through `next/image` (automatic AVIF/WebP + resizing on Vercel) rather than hotlinked from an external CDN.
+
+## Known gaps
+
+- The Rails API isn't deployed yet, so phone login/onboarding only work when pointed at a local backend — see the root README.
+- Matches/Messages/Introductions/Profile/Verification/Subscription have their original functional-but-plain styling; Discover and the marketing page were prioritized.
+- No WebGL/3D on the marketing page — considered and deliberately dropped in favor of a smaller bundle and lower risk on low-end devices; the 2D GSAP choreography carries the "awwwards" feel on its own.
