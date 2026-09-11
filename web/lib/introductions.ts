@@ -14,22 +14,20 @@ export interface Introduction {
   ward_b: WardSummary;
 }
 
-export function getIntroductions(token: string) {
-  return apiFetch<Introduction[]>("/introductions", { token });
+export function getIntroductions() {
+  return apiFetch<Introduction[]>("/introductions");
 }
 
-export function acceptIntroduction(token: string, introductionId: number, wardProfileId: number) {
+export function acceptIntroduction(introductionId: number, wardProfileId: number) {
   return apiFetch<Introduction>(`/introductions/${introductionId}/accept`, {
     method: "POST",
-    token,
     body: { ward_profile_id: wardProfileId },
   });
 }
 
-export function declineIntroduction(token: string, introductionId: number, wardProfileId: number) {
+export function declineIntroduction(introductionId: number, wardProfileId: number) {
   return apiFetch<Introduction>(`/introductions/${introductionId}/decline`, {
     method: "POST",
-    token,
     body: { ward_profile_id: wardProfileId },
   });
 }

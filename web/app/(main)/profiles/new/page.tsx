@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function NewProfilePage() {
-  const { token, account } = useAuth();
+  const { account } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -22,11 +22,12 @@ export default function NewProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
     setError("");
     setSubmitting(true);
     try {
-      await createProfile(token, { name, profile_type: profileType, city, bio });
+      // Profiles are always created as "draft" server-side -- the profile
+      // hub links into /edit to add photos/prompts and activate it.
+      await createProfile({ name, profile_type: profileType, city, bio });
       router.push("/profile");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create profile");

@@ -1,10 +1,12 @@
 import { apiFetch } from "./api";
+import type { ProfileSummary } from "./profiles";
 
 export interface ConversationSummary {
   id: number;
   match_id: number;
-  other_profile: { id: number; name: string };
+  other_profile: ProfileSummary;
   last_message: { body: string; sent_at: string } | null;
+  unread_count: number;
 }
 
 export interface Message {
@@ -16,26 +18,24 @@ export interface Message {
   read_at: string | null;
 }
 
-export function getConversations(token: string) {
-  return apiFetch<ConversationSummary[]>("/conversations", { token });
+export function getConversations() {
+  return apiFetch<ConversationSummary[]>("/conversations");
 }
 
-export function createConversation(token: string, matchId: number) {
+export function createConversation(matchId: number) {
   return apiFetch<ConversationSummary>("/conversations", {
     method: "POST",
-    token,
     body: { match_id: matchId },
   });
 }
 
-export function getMessages(token: string, conversationId: number) {
-  return apiFetch<Message[]>(`/conversations/${conversationId}/messages`, { token });
+export function getMessages(conversationId: number) {
+  return apiFetch<Message[]>(`/conversations/${conversationId}/messages`);
 }
 
-export function sendMessage(token: string, conversationId: number, body: string) {
+export function sendMessage(conversationId: number, body: string) {
   return apiFetch<Message>(`/conversations/${conversationId}/messages`, {
     method: "POST",
-    token,
     body: { body },
   });
 }

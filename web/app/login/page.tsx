@@ -3,28 +3,35 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
+function normalizeDigits(value: string) {
+  return value.replace(/\D/g, "").slice(0, 10);
+}
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (phone.length !== 10) {
+      setError("Enter a 10-digit phone number");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.push("/discover");
+      const res = await startPhoneAuth(phone);
+      const devParam = res.dev_code ? `&dev=${res.dev_code}` : "";
+      router.push(`/verify?phone=${phone}${devParam}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -50,23 +57,38 @@ export default function LoginPage() {
 
           <div>
             <h1 className="font-display text-3xl">Welcome back</h1>
-            <p className="text-muted-foreground mt-1">Log in to continue your search.</p>
+            <p className="text-muted-foreground mt-1">Enter your phone number to continue.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <label htmlFor="phone" className="text-sm font-medium">Phone number</label>
+              <div className="flex items-center rounded-full border border-input bg-background overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+                <span className="pl-4 pr-2 text-sm text-muted-foreground border-r border-input py-2.5">+91</span>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="98765 43210"
+                  value={phone}
+                  onChange={(e) => setPhone(normalizeDigits(e.target.value))}
+                  className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none"
+                  required
+                />
+              </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full rounded-full" disabled={submitting}>
-              {submitting ? "Logging in..." : "Log in"}
+              {submitting ? "Sending code..." : "Send code"}
             </Button>
           </form>
+
+          <p className="text-sm text-muted-foreground text-center">
+            <Link href="/login/email" className="text-primary underline underline-offset-4">
+              Use email and password instead
+            </Link>
+          </p>
 
           <p className="text-sm text-muted-foreground text-center">
             New here?{" "}

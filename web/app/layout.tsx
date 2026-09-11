@@ -11,9 +11,13 @@ export const metadata: Metadata = {
   description: "A modern matrimony platform for Christians",
 };
 
+// Deliberately reads no request-time API (no cookies/headers) so the
+// marketing landing page nested under this layout stays a static
+// prerender. Auth is hydrated lower down, in (main)/layout.tsx, which is
+// the only part of the tree that actually requires a session.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${inter.variable}`} data-scroll-behavior="smooth">
       <body>
         <AuthProvider>{children}</AuthProvider>
       </body>

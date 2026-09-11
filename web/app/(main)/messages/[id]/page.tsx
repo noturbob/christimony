@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { getMessages, sendMessage, Message } from "@/lib/conversations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const POLL_INTERVAL_MS = 5000;
+
 export default function MessageThreadPage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
   const params = useParams();
   const conversationId = Number(params.id);
 
@@ -22,15 +23,26 @@ export default function MessageThreadPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
+    if (!account) return;
 
-  useEffect(() => {
-    if (!token) return;
-    getMessages(token, conversationId)
-      .then(setMessages)
-      .finally(() => setLoadingMessages(false));
-  }, [token, conversationId]);
+    let cancelled = false;
+    function poll() {
+      getMessages(conversationId)
+        .then((data) => {
+          if (!cancelled) setMessages(data);
+        })
+        .finally(() => {
+          if (!cancelled) setLoadingMessages(false);
+        });
+    }
+
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [account, conversationId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,11 +50,11 @@ export default function MessageThreadPage() {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || !draft.trim()) return;
+    if (!draft.trim()) return;
     setSending(true);
     setError("");
     try {
-      const message = await sendMessage(token, conversationId, draft.trim());
+      const message = await sendMessage(conversationId, draft.trim());
       setMessages((prev) => [...prev, message]);
       setDraft("");
     } catch (err) {
@@ -52,12 +64,11 @@ export default function MessageThreadPage() {
     }
   }
 
-  if (loading) return <p className="p-8">Loading...</p>;
   if (!account) return null;
 
   return (
     <div className="max-w-3xl mx-auto w-full px-6 py-6 flex flex-col min-h-[80vh]">
-      <Link href="/messages" className="text-sm text-muted-foreground hover:text-foreground mb-4">← Matches</Link>
+      <Link href="/messages" className="text-sm text-muted-foreground hover:text-foreground mb-4">← Messages</Link>
 
       <div className="flex-1 space-y-3 overflow-y-auto">
         {loadingMessages ? (

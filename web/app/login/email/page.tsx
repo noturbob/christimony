@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth, type Account } from "@/lib/auth-context";
-import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function SignupPage() {
-  const { establishSession } = useAuth();
+export default function EmailLoginPage() {
+  const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [accountType, setAccountType] = useState("individual");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,14 +21,10 @@ export default function SignupPage() {
     setError("");
     setSubmitting(true);
     try {
-      const data = await apiFetch<{ token: string; account: Account }>("/signup", {
-        method: "POST",
-        body: { account: { email, password, account_type: accountType } },
-      });
-      await establishSession(data.token, data.account);
-      router.push("/onboarding/account-type");
+      await login(email, password);
+      router.push("/discover");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setSubmitting(false);
     }
@@ -42,7 +36,7 @@ export default function SignupPage() {
         <span className="font-display text-2xl">Christimony</span>
         <div>
           <p className="font-display text-6xl leading-tight max-w-md">
-            Every family plays a part in a marriage that lasts.
+            Marriage, sought with intention.
           </p>
         </div>
         <p className="text-sm opacity-70">For Christians building a life together.</p>
@@ -55,8 +49,8 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <h1 className="font-display text-3xl">Create an account</h1>
-            <p className="text-muted-foreground mt-1">Start your search, or help guide someone else&apos;s.</p>
+            <h1 className="font-display text-3xl">Log in with email</h1>
+            <p className="text-muted-foreground mt-1">For accounts created with a password.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,37 +60,17 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accountType">I am signing up as</Label>
-              <select
-                id="accountType"
-                value={accountType}
-                onChange={(e) => setAccountType(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="individual">Myself</option>
-                <option value="parent">A parent, on behalf of my child</option>
-              </select>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full rounded-full" disabled={submitting}>
-              {submitting ? "Creating account..." : "Sign up"}
+              {submitting ? "Logging in..." : "Log in"}
             </Button>
           </form>
 
           <p className="text-sm text-muted-foreground text-center">
-            Prefer your phone number?{" "}
             <Link href="/login" className="text-primary underline underline-offset-4">
-              Sign up with phone instead
-            </Link>
-          </p>
-
-          <p className="text-sm text-muted-foreground text-center">
-            Already have an account?{" "}
-            <Link href="/login/email" className="text-primary underline underline-offset-4">
-              Log in
+              Use your phone number instead
             </Link>
           </p>
         </div>

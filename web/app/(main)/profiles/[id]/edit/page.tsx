@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getProfile, updateProfile, uploadProfilePhoto, deleteProfilePhoto, Profile } from "@/lib/profiles";
+import { getVouches, createVouch, Vouch } from "@/lib/vouches";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function EditProfilePage() {
-  const { account, token, loading } = useAuth();
-  const router = useRouter();
+  const { account } = useAuth();
   const params = useParams();
   const profileId = Number(params.id);
 
@@ -27,32 +27,33 @@ export default function EditProfilePage() {
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !account) router.push("/login");
-  }, [loading, account, router]);
+  const [vouches, setVouches] = useState<Vouch[]>([]);
+  const [voucherName, setVoucherName] = useState("");
+  const [voucherRole, setVoucherRole] = useState("pastor");
+  const [submittingVouch, setSubmittingVouch] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-    getProfile(token, profileId)
-      .then((p) => {
+    if (!account) return;
+    Promise.all([getProfile(profileId), getVouches(profileId)])
+      .then(([p, v]) => {
         setProfile(p);
         setName(p.name);
         setCity(p.city ?? "");
         setBio(p.bio ?? "");
         setEducation(p.education ?? "");
         setProfession(p.profession ?? "");
+        setVouches(v);
       })
       .finally(() => setLoadingData(false));
-  }, [token, profileId]);
+  }, [account, profileId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
     setError("");
     setSaving(true);
     setSaved(false);
     try {
-      await updateProfile(token, profileId, { name, city, bio, education, profession });
+      await updateProfile(profileId, { name, city, bio, education, profession });
       setSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. You may not have permission to edit this profile.");
@@ -61,11 +62,21 @@ export default function EditProfilePage() {
     }
   }
 
+  async function handleActivate() {
+    setError("");
+    try {
+      const updated = await updateProfile(profileId, { status: "active" });
+      setProfile(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to activate profile");
+    }
+  }
+
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!token || !e.target.files?.[0]) return;
+    if (!e.target.files?.[0]) return;
     setUploading(true);
     try {
-      const photo = await uploadProfilePhoto(token, profileId, e.target.files[0]);
+      const photo = await uploadProfilePhoto(profileId, e.target.files[0]);
       setProfile((prev) => (prev ? { ...prev, photos: [...prev.photos, photo] } : prev));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload photo");
@@ -76,16 +87,28 @@ export default function EditProfilePage() {
   }
 
   async function handlePhotoDelete(photoId: number) {
-    if (!token) return;
     try {
-      await deleteProfilePhoto(token, profileId, photoId);
+      await deleteProfilePhoto(profileId, photoId);
       setProfile((prev) => (prev ? { ...prev, photos: prev.photos.filter((p) => p.id !== photoId) } : prev));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete photo");
     }
   }
 
-  if (loading || loadingData) return <p className="p-8">Loading...</p>;
+  async function handleVouch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!voucherName.trim()) return;
+    setSubmittingVouch(true);
+    try {
+      const vouch = await createVouch(profileId, { voucher_name: voucherName, voucher_role: voucherRole });
+      setVouches((prev) => [...prev, vouch]);
+      setVoucherName("");
+    } finally {
+      setSubmittingVouch(false);
+    }
+  }
+
+  if (loadingData) return <p className="p-8">Loading...</p>;
   if (!account || !profile) return null;
 
   return (
@@ -95,6 +118,18 @@ export default function EditProfilePage() {
         <p className="text-muted-foreground mt-1">Keep {profile.name}&apos;s details up to date.</p>
       </div>
 
+      {profile.status === "draft" && (
+        <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium">This profile is a draft</p>
+            <p className="text-sm text-muted-foreground">It won&apos;t show up in anyone&apos;s feed until you activate it.</p>
+          </div>
+          <Button className="rounded-full shrink-0" onClick={handleActivate} disabled={profile.photos.length === 0}>
+            Activate
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-3">
         <p className="text-sm font-medium">Photos</p>
         <div className="grid grid-cols-3 gap-2">
@@ -103,7 +138,7 @@ export default function EditProfilePage() {
             .map((photo) => (
               <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden bg-secondary">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                <img src={photo.thumb_url} alt="" className="w-full h-full object-cover" />
                 <button
                   onClick={() => handlePhotoDelete(photo.id)}
                   className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center"
@@ -119,6 +154,9 @@ export default function EditProfilePage() {
             </label>
           )}
         </div>
+        {profile.photos.length < 2 && (
+          <p className="text-xs text-muted-foreground">Add at least 2 photos before activating this profile.</p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-card p-6">
@@ -152,6 +190,52 @@ export default function EditProfilePage() {
           {saving ? "Saving..." : "Save changes"}
         </Button>
       </form>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-display text-xl">Vouches</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ask a pastor, elder, or family friend to vouch for {profile.name} — it builds trust with people who view this profile.
+          </p>
+        </div>
+
+        {vouches.length > 0 && (
+          <div className="space-y-2">
+            {vouches.map((v) => (
+              <div key={v.id} className="rounded-xl border border-border bg-card px-4 py-3 text-sm flex items-center justify-between">
+                <span>{v.voucher_name} <span className="text-muted-foreground capitalize">· {v.voucher_role}</span></span>
+                <span className="text-xs text-muted-foreground capitalize">{v.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleVouch} className="rounded-2xl border border-border bg-card p-5 space-y-3">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="voucherName">Their name</Label>
+              <Input id="voucherName" value={voucherName} onChange={(e) => setVoucherName(e.target.value)} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="voucherRole">Their role</Label>
+              <select
+                id="voucherRole"
+                value={voucherRole}
+                onChange={(e) => setVoucherRole(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="pastor">Pastor</option>
+                <option value="elder">Elder</option>
+                <option value="family_friend">Family friend</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <Button type="submit" size="sm" className="rounded-full" disabled={submittingVouch}>
+            {submittingVouch ? "Adding..." : "Add vouch"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
