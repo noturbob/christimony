@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_002759) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_11_140002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,8 +18,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_002759) do
     t.string "account_type", default: "individual", null: false
     t.datetime "created_at", null: false
     t.string "email"
-    t.string "password_digest", null: false
+    t.string "password_digest"
     t.string "phone"
+    t.datetime "phone_verified_at"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_accounts_on_email", unique: true
     t.index ["phone"], name: "index_accounts_on_phone", unique: true
@@ -111,6 +112,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_002759) do
     t.datetime "updated_at", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["sender_account_id"], name: "index_messages_on_sender_account_id"
+  end
+
+  create_table "otp_codes", force: :cascade do |t|
+    t.integer "attempts", default: 0, null: false
+    t.string "code_digest", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "last_sent_at"
+    t.string "phone", null: false
+    t.string "purpose", default: "login", null: false
+    t.datetime "updated_at", null: false
+    t.index ["phone", "purpose", "consumed_at"], name: "index_otp_codes_on_phone_and_purpose_and_consumed_at"
   end
 
   create_table "profile_accesses", force: :cascade do |t|
