@@ -2,12 +2,55 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
 import { X, Heart } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { getFeed, getMyProfiles, sendInterest, Profile } from "@/lib/profiles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { SkeletonCard } from "@/components/skeleton-card";
+import { SwipeCard } from "@/components/swipe-card";
+
+function ProfileCardBody({ profile }: { profile: Profile }) {
+  return (
+    <>
+      <PhotoCarousel photos={profile.photos} fallbackLetter={profile.name.charAt(0)} />
+      <div className="p-6 space-y-4">
+        <div>
+          <h2 className="font-display text-2xl">
+            {profile.name}
+            {profile.age ? <span className="text-muted-foreground font-normal">, {profile.age}</span> : null}
+          </h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            {[profile.city, profile.denomination, profile.profession].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+
+        {profile.prompts.length > 0 && (
+          <div className="rounded-2xl bg-secondary/40 p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{profile.prompts[0].question}</p>
+            <p className="text-sm leading-relaxed font-display text-lg">{profile.prompts[0].answer}</p>
+          </div>
+        )}
+
+        {profile.bio && (
+          <div className="rounded-2xl bg-secondary/40 p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">About</p>
+            <p className="text-sm leading-relaxed">{profile.bio}</p>
+          </div>
+        )}
+
+        {profile.education && (
+          <div className="rounded-2xl bg-secondary/40 p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Education</p>
+            <p className="text-sm">{profile.education}</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default function DiscoverPage() {
   const { account } = useAuth();
@@ -21,6 +64,7 @@ export default function DiscoverPage() {
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [acting, setActing] = useState(false);
   const [matchOverlay, setMatchOverlay] = useState<Profile | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
 
   useEffect(() => {
     if (!account) return;
@@ -48,10 +92,12 @@ export default function DiscoverPage() {
   }, [account]);
 
   const current = queue[index];
+  const next = queue[index + 1];
 
-  async function handleLike() {
+  async function performLike() {
     if (!activeProfileId || !current || acting) return;
     setActing(true);
+    setCanUndo(false);
     try {
       const result = await sendInterest(activeProfileId, current.id);
       if (result.match) {
@@ -66,9 +112,18 @@ export default function DiscoverPage() {
     }
   }
 
-  function handlePass() {
+  function performPass() {
     if (acting) return;
     setIndex((i) => i + 1);
+    // Passing never calls the API (there's no "unlike" endpoint to undo a
+    // like against), so only a pass can be safely undone.
+    setCanUndo(true);
+  }
+
+  function handleUndo() {
+    if (!canUndo || index === 0) return;
+    setIndex((i) => i - 1);
+    setCanUndo(false);
   }
 
   function closeOverlay() {
@@ -130,61 +185,54 @@ export default function DiscoverPage() {
       )}
 
       {loadingFeed ? (
-        <p className="text-muted-foreground text-center py-20">Loading...</p>
+        <SkeletonCard />
       ) : !current ? (
         <div className="text-center py-20 space-y-3">
           <p className="font-display text-xl">That&apos;s everyone for now</p>
           <p className="text-muted-foreground text-sm">Check back soon, or try a different filter.</p>
         </div>
       ) : (
-        <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-sm">
-          <PhotoCarousel photos={current.photos} fallbackLetter={current.name.charAt(0)} />
-          <div className="p-6 space-y-4">
-            <div>
-              <h2 className="font-display text-2xl">
-                {current.name}
-                {current.age ? <span className="text-muted-foreground font-normal">, {current.age}</span> : null}
-              </h2>
-              <p className="text-muted-foreground text-sm mt-1">
-                {[current.city, current.denomination, current.profession].filter(Boolean).join(" · ")}
-              </p>
+        <div className="relative" style={{ minHeight: 560 }}>
+          {next && (
+            <div className="absolute inset-0 rounded-3xl border border-border bg-card overflow-hidden shadow-sm scale-[0.96] translate-y-2 opacity-70">
+              <ProfileCardBody profile={next} />
             </div>
-
-            {current.prompts.length > 0 && (
-              <div className="rounded-2xl bg-secondary/40 p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{current.prompts[0].question}</p>
-                <p className="text-sm leading-relaxed font-display text-lg">{current.prompts[0].answer}</p>
-              </div>
-            )}
-
-            {current.bio && (
-              <div className="rounded-2xl bg-secondary/40 p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">About</p>
-                <p className="text-sm leading-relaxed">{current.bio}</p>
-              </div>
-            )}
-
-            {current.education && (
-              <div className="rounded-2xl bg-secondary/40 p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Education</p>
-                <p className="text-sm">{current.education}</p>
-              </div>
-            )}
-          </div>
+          )}
+          <AnimatePresence>
+            <SwipeCard
+              key={current.id}
+              onSwiped={(direction) => (direction === "like" ? performLike() : performPass())}
+              disabled={acting}
+              className="absolute inset-0 rounded-3xl border border-border bg-card overflow-hidden shadow-sm cursor-grab active:cursor-grabbing"
+            >
+              <ProfileCardBody profile={current} />
+            </SwipeCard>
+          </AnimatePresence>
         </div>
       )}
 
       {current && (
-        <div className="flex items-center justify-center gap-6 py-8">
+        <div className="flex items-center justify-center gap-4 py-8">
+          {canUndo && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={handleUndo}
+              className="h-11 w-11 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground text-xs font-medium"
+              aria-label="Undo"
+            >
+              ↺
+            </motion.button>
+          )}
           <button
-            onClick={handlePass}
+            onClick={performPass}
             disabled={acting}
             className="h-16 w-16 rounded-full border border-border bg-card flex items-center justify-center hover:bg-secondary transition-colors"
           >
             <X size={26} className="text-muted-foreground" />
           </button>
           <button
-            onClick={handleLike}
+            onClick={performLike}
             disabled={acting}
             className="h-16 w-16 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
           >
@@ -194,8 +242,18 @@ export default function DiscoverPage() {
       )}
 
       {matchOverlay && (
-        <div className="fixed inset-0 z-30 bg-primary text-primary-foreground flex flex-col items-center justify-center px-8 text-center gap-6">
-          <Heart size={56} fill="currentColor" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-30 bg-primary text-primary-foreground flex flex-col items-center justify-center px-8 text-center gap-6"
+        >
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          >
+            <Heart size={56} fill="currentColor" />
+          </motion.div>
           <h2 className="font-display text-4xl">It&apos;s a match!</h2>
           <p className="opacity-80">You and {matchOverlay.name} liked each other.</p>
           <div className="flex flex-col gap-3 w-full max-w-xs mt-4">
@@ -206,7 +264,7 @@ export default function DiscoverPage() {
               Keep browsing
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
