@@ -12,6 +12,6 @@ class CreateOtpCodes < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :otp_codes, [:phone, :purpose, :consumed_at]
+    add_index :otp_codes, [ :phone, :purpose, :consumed_at ]
   end
 end
