@@ -108,6 +108,15 @@
   font-optical-sizing: auto;
 }
 
+/* SplitText's mask:"lines" wraps each line in an overflow-hidden box sized
+   to the (intentionally tight) line-height, which clips ascenders/capitals
+   and descenders on this display serif. Padding gives glyphs room; the
+   matching negative margin cancels it back out so line spacing is unchanged. */
+[data-testid="hero-headline"] .line {
+  padding-block: 0.16em;
+  margin-block: -0.16em;
+}
+
 @keyframes shake {
   10%, 90% { transform: translateX(-1px); }
   20%, 80% { transform: translateX(2px); }

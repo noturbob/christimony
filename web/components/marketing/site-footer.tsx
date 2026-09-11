@@ -41,7 +41,11 @@ export function SiteFooter() {
   }, []);
 
   return (
-    <footer data-testid="site-footer" className="bg-[#1b1b18] px-5 pt-14 pb-10 text-[#faf6ef] lg:px-8">
+    <footer
+      data-testid="site-footer"
+      style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}
+      className="bg-[#1b1b18] px-5 pt-14 text-[#faf6ef] lg:px-8"
+    >
       <div className="mx-auto max-w-[1240px]">
         <div className="flex flex-col gap-9 md:flex-row md:items-end md:justify-between">
           <div>
@@ -74,8 +78,11 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <div className="mt-14 overflow-hidden border-t border-[#faf6ef]/10 pt-8 text-center">
-          <div ref={bigWordRef} className="font-display text-[clamp(3rem,13vw,11rem)] leading-[0.85] tracking-[-0.05em] text-[#faf6ef] select-none">
+        <div className="mt-14 border-t border-[#faf6ef]/10 pt-8 text-center">
+          <div
+            ref={bigWordRef}
+            className="font-display text-[clamp(2.5rem,13vw,10.5rem)] leading-[1.15] tracking-[-0.05em] text-[#faf6ef] select-none pb-[0.08em]"
+          >
             Christimony
           </div>
         </div>

@@ -48,7 +48,7 @@ export function HeroSection() {
     <section
       ref={heroRef}
       data-testid="hero-section"
-      className="relative isolate min-h-[730px] overflow-hidden bg-[#24463b] text-[#faf6ef] lg:min-h-[790px]"
+      className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden bg-[#24463b] text-[#faf6ef]"
     >
       <motion.div
         data-testid="hero-dot-texture"
@@ -58,7 +58,7 @@ export function HeroSection() {
 
       <div className="absolute -right-24 top-24 -z-10 size-[420px] rounded-full bg-[#7a2e2e]/20 blur-[90px]" />
 
-      <div className="mx-auto flex max-w-[1240px] flex-col px-5 pb-16 pt-36 lg:flex-row lg:items-end lg:gap-14 lg:px-8 lg:pb-24 lg:pt-44">
+      <div className="mx-auto flex w-full max-w-[1240px] flex-col px-5 py-16 lg:flex-row lg:items-end lg:gap-14 lg:px-8 lg:py-24">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
