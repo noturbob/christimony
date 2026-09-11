@@ -21,14 +21,20 @@ async function forward(request: NextRequest, path: string[]) {
 
   const hasBody = !["GET", "HEAD"].includes(request.method);
 
-  const response = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body: hasBody ? request.body : undefined,
-    // @ts-expect-error -- `duplex` is required by undici for streamed request bodies but isn't in the RequestInit type yet
-    duplex: hasBody ? "half" : undefined,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body: hasBody ? request.body : undefined,
+      // @ts-expect-error -- `duplex` is required by undici for streamed request bodies but isn't in the RequestInit type yet
+      duplex: hasBody ? "half" : undefined,
+      cache: "no-store",
+    });
+  } catch (err) {
+    console.error(`BFF proxy failed to reach ${targetUrl}:`, err);
+    return NextResponse.json({ error: "The service is temporarily unavailable" }, { status: 502 });
+  }
 
   if (response.status === 401) {
     await clearSessionToken();
