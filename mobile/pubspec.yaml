@@ -90,5 +90,8 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
 
-  assets:
-    - assets/images/
+  # No bundled images yet -- git doesn't track empty directories, so
+  # declaring `assets/images/` here with nothing in it passed locally
+  # (the empty dir existed on disk) but broke CI (a fresh checkout has
+  # no such directory), which flutter analyze treats as a warning ->
+  # non-zero exit. Re-add once there's an actual asset in that folder.
