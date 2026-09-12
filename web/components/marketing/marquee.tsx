@@ -29,13 +29,43 @@ export function Marquee() {
       });
 
       const onEnter = () => tween.pause();
-      const onLeave = () => tween.play();
+      const onLeave = () => {
+        if (document.visibilityState === "visible") tween.play();
+      };
       track.addEventListener("mouseenter", onEnter);
       track.addEventListener("mouseleave", onLeave);
+
+      // The tween runs on a 32s loop that never naturally settles, so
+      // without this it keeps ticking (and asking the compositor for a
+      // frame) for as long as the page is open, even scrolled far out of
+      // view or backgrounded -- pure overhead competing with whatever
+      // scroll/animation work is actually on screen. Pause it whenever
+      // it's not visible and resume only if the mouse isn't currently
+      // hovering it.
+      const io = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          if (document.visibilityState === "visible") tween.play();
+        } else {
+          tween.pause();
+        }
+      });
+      io.observe(track);
+
+      const onVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          const rect = track.getBoundingClientRect();
+          if (rect.bottom > 0 && rect.top < window.innerHeight) tween.play();
+        } else {
+          tween.pause();
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibilityChange);
 
       return () => {
         track.removeEventListener("mouseenter", onEnter);
         track.removeEventListener("mouseleave", onLeave);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        io.disconnect();
       };
     },
     { scope: trackRef }
