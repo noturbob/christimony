@@ -81,19 +81,27 @@ export function SiteHeader() {
         </button>
       </nav>
 
-      {/* CSS-only accordion (grid-template-rows 0fr -> 1fr) instead of
-          animating `height`, which forces a synchronous layout pass on
-          every frame -- fine on most engines, but a well-known jank
-          source on iOS Safari's layout path. The row transition never
-          measures anything in JS, so it stays smooth regardless. Content
-          stays mounted and is only clipped by the inner overflow-hidden
-          div, so `inert` takes it out of tab order/hit-testing while
-          closed instead of unmounting it. */}
+      {/* CSS-only accordion instead of animating `height` (which forces a
+          synchronous layout pass on every frame via JS measurement -- a
+          well-known jank source on iOS Safari's layout path). This uses
+          `max-height` rather than the `grid-template-rows: 0fr -> 1fr`
+          trick: that trick only resolves unambiguously when the grid
+          container has a definite size to distribute, and on an
+          auto-height single-row container (our case), WebKit falls back
+          to sizing the row from the content's own height instead of
+          collapsing it -- so the "closed" state stayed visibly expanded
+          on iOS. `max-height: 0` uses a definite length on both ends, so
+          it collapses correctly everywhere. The generous cap is well
+          above this menu's actual content height, just clipped by
+          overflow-hidden; that only costs a slightly non-linear ease,
+          imperceptible over 300ms. Content stays mounted, so `inert`
+          takes it out of tab order/hit-testing while closed instead of
+          unmounting it. */}
       <div
         data-testid="mobile-navigation-menu"
         inert={!mobileOpen}
-        className={`grid transition-[grid-template-rows] duration-300 ease-out md:hidden ${
-          mobileOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        className={`overflow-hidden transition-[max-height] duration-300 ease-out md:hidden ${
+          mobileOpen ? "max-h-96" : "max-h-0"
         }`}
       >
         {/* The border lives here, gated on mobileOpen, rather than being
@@ -101,7 +109,7 @@ export function SiteHeader() {
             regardless of the box's height, so an always-on border here
             would draw a permanent hairline under the header even while
             this div is collapsed to 0 height. */}
-        <div className={`overflow-hidden bg-[#faf6ef] px-5 pb-6 ${mobileOpen ? "border-t border-[#e2dacb]" : ""}`}>
+        <div className={`bg-[#faf6ef] px-5 pb-6 ${mobileOpen ? "border-t border-[#e2dacb]" : ""}`}>
           <div className="flex flex-col gap-4 pt-5">
             <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
               How it works
