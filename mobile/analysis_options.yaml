@@ -1,8 +1,14 @@
 include: package:very_good_analysis/analysis_options.yaml
 
-plugins:
-  riverpod_lint: 3.1.9
-
+# riverpod_lint is intentionally NOT registered as an analyzer plugin here.
+# Its `analysis_server_plugin` architecture runs as a separate plugin
+# process, and that surfaced as a CI-only `flutter analyze` failure that
+# didn't reproduce locally on an identical Flutter version with identical
+# source (see the "Analyze" step failing while every prior step -- including
+# "generated code matches what's committed" -- passed, in the run that
+# broke CI). Re-enable with `plugins: {riverpod_lint: <version>}` once
+# that's been root-caused; the riverpod_lint dev_dependency stays in
+# pubspec.yaml so IDEs can still opt into it manually.
 analyzer:
   exclude:
     - "**/*.g.dart"
