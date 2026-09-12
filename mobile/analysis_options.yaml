@@ -1,0 +1,33 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+plugins:
+  riverpod_lint: 3.1.9
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - build/**
+    - android/**
+    - ios/**
+
+linter:
+  rules:
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
+    # These three conflict with idiomatic freezed model code rather than
+    # catching real bugs: freezed's generated private factory
+    # (`_ClassName(...)`) always trips `unnecessary_type_name_in_constructor`
+    # and reorders required-after-optional in ways
+    # `always_put_required_named_parameters_first` flags; relative imports
+    # within lib/ (`always_use_package_imports` wants `package:` everywhere)
+    # are the more common Dart style and what the rest of this repo (web/)
+    # also uses for intra-package imports.
+    unnecessary_type_name_in_constructor: false
+    always_put_required_named_parameters_first: false
+    always_use_package_imports: false
+    # pubspec.yaml groups dependencies by purpose with explanatory
+    # comments (matches the dependency table in docs/mobile-v1-plan.md
+    # §4.1) rather than alphabetically -- more useful for a team than
+    # strict A-Z sorting.
+    sort_pub_dependencies: false

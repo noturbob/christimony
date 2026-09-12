@@ -9,9 +9,13 @@ A modern, Hinge/Bumble-style matrimony platform for Christians — denomination-
 ```
 web/       Next.js 16 frontend (App Router, React 19, Tailwind v4)   → web/README.md
 backend/   Ruby on Rails 8.1 API (Postgres, JWT auth)                → backend/README.md
+mobile/    Flutter client (Android + iOS), early scaffold            → mobile/README.md
+docs/      Cross-cutting design docs and build plans
 ```
 
-The two are independent deployables that talk over JSON: `web` never touches the database directly, and `backend` knows nothing about Next.js. Each has its own README with full setup instructions, environment variables, and API/route details — this file is just the map.
+`web`, `backend`, and `mobile` are independent deployables that talk over JSON: `web` and `mobile` never touch the database directly, and `backend` knows nothing about Next.js or Flutter. Each has its own README with full setup instructions, environment variables, and API/route details — this file is just the map.
+
+A third deployable, `mobile/` (Flutter, Android + iOS), is in early scaffolding — see [`mobile/README.md`](mobile/README.md) for what exists today and [`docs/mobile-v1-plan.md`](docs/mobile-v1-plan.md) for the full build brief, including the design-token set, the API contract gotchas a native client has to handle, and the Rails-side work the app depends on.
 
 ## Architecture at a glance
 
