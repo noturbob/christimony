@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { Wordmark } from "./shared";
 import { ArrowGlyph, MenuGlyph } from "./icons";
@@ -82,37 +81,43 @@ export function SiteHeader() {
         </button>
       </nav>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            data-testid="mobile-navigation-menu"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-t border-[#e2dacb] bg-[#faf6ef] px-5 pb-6 md:hidden"
-          >
-            <div className="flex flex-col gap-4 pt-5">
-              <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
-                How it works
-              </Link>
-              <Link data-testid="mobile-faq-link" href="#faq" onClick={closeMobile} className="font-medium">
-                Questions
-              </Link>
-              <Link data-testid="mobile-login-link" href="/login" onClick={closeMobile} className="font-medium">
-                Log in
-              </Link>
-              <Link
-                data-testid="mobile-get-started-link"
-                href="/signup"
-                onClick={closeMobile}
-                className="rounded-full bg-[#24463b] px-5 py-3 text-center font-semibold text-[#faf6ef]"
-              >
-                Get started <ArrowGlyph className="ml-1 inline size-4" />
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* CSS-only accordion (grid-template-rows 0fr -> 1fr) instead of
+          animating `height`, which forces a synchronous layout pass on
+          every frame -- fine on most engines, but a well-known jank
+          source on iOS Safari's layout path. The row transition never
+          measures anything in JS, so it stays smooth regardless. Content
+          stays mounted and is only clipped by the inner overflow-hidden
+          div, so `inert` takes it out of tab order/hit-testing while
+          closed instead of unmounting it. */}
+      <div
+        data-testid="mobile-navigation-menu"
+        inert={!mobileOpen}
+        className={`grid transition-[grid-template-rows] duration-300 ease-out md:hidden ${
+          mobileOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden border-t border-[#e2dacb] bg-[#faf6ef] px-5 pb-6">
+          <div className="flex flex-col gap-4 pt-5">
+            <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
+              How it works
+            </Link>
+            <Link data-testid="mobile-faq-link" href="#faq" onClick={closeMobile} className="font-medium">
+              Questions
+            </Link>
+            <Link data-testid="mobile-login-link" href="/login" onClick={closeMobile} className="font-medium">
+              Log in
+            </Link>
+            <Link
+              data-testid="mobile-get-started-link"
+              href="/signup"
+              onClick={closeMobile}
+              className="rounded-full bg-[#24463b] px-5 py-3 text-center font-semibold text-[#faf6ef]"
+            >
+              Get started <ArrowGlyph className="ml-1 inline size-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
     </header>
   );
 }
