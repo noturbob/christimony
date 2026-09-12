@@ -5,7 +5,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
-import { ensureGsapRegistered, gsap, SplitText } from "@/lib/gsap";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, SplitText } from "@/lib/gsap";
 import { SectionEyebrow } from "../shared";
 import { ArrowGlyph } from "../icons";
 
@@ -25,21 +25,27 @@ export function HeroSection() {
       if (reduceMotion || !headlineRef.current) return;
       ensureGsapRegistered();
 
-      const split = SplitText.create(headlineRef.current, {
-        type: "lines",
-        mask: "lines",
-        linesClass: "line",
-        autoSplit: true,
-        onSplit: (self) => {
-          return gsap.fromTo(
-            self.lines,
-            { yPercent: 110 },
-            { yPercent: 0, duration: 1, ease: "power4.out", stagger: 0.09, delay: 0.35 }
-          );
-        },
+      let split: ReturnType<typeof SplitText.create> | undefined;
+      const idle = scheduleIdle(() => {
+        split = SplitText.create(headlineRef.current!, {
+          type: "lines",
+          mask: "lines",
+          linesClass: "line",
+          autoSplit: true,
+          onSplit: (self) => {
+            return gsap.fromTo(
+              self.lines,
+              { yPercent: 110 },
+              { yPercent: 0, duration: 1, ease: "power4.out", stagger: 0.09, delay: 0.35 }
+            );
+          },
+        });
       });
 
-      return () => split.revert();
+      return () => {
+        cancelIdle(idle);
+        split?.revert();
+      };
     },
     { scope: heroRef, dependencies: [reduceMotion] }
   );

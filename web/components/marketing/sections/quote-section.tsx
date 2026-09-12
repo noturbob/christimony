@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { ensureGsapRegistered, gsap, SplitText } from "@/lib/gsap";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, SplitText } from "@/lib/gsap";
 import { DiamondGlyph } from "../icons";
 
 export function QuoteSection() {
@@ -13,22 +13,28 @@ export function QuoteSection() {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       ensureGsapRegistered();
 
-      const split = SplitText.create(quoteRef.current, { type: "words" });
+      let split: ReturnType<typeof SplitText.create> | undefined;
+      const idle = scheduleIdle(() => {
+        split = SplitText.create(quoteRef.current, { type: "words" });
 
-      gsap.set(split.words, { opacity: 0.15 });
-      gsap.to(split.words, {
-        opacity: 1,
-        stagger: 0.06,
-        ease: "none",
-        scrollTrigger: {
-          trigger: quoteRef.current,
-          start: "top 75%",
-          end: "bottom 45%",
-          scrub: 0.4,
-        },
+        gsap.set(split.words, { opacity: 0.15 });
+        gsap.to(split.words, {
+          opacity: 1,
+          stagger: 0.06,
+          ease: "none",
+          scrollTrigger: {
+            trigger: quoteRef.current,
+            start: "top 75%",
+            end: "bottom 45%",
+            scrub: 0.4,
+          },
+        });
       });
 
-      return () => split.revert();
+      return () => {
+        cancelIdle(idle);
+        split?.revert();
+      };
     },
     { scope: quoteRef }
   );

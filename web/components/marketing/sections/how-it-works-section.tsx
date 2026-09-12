@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion } from "motion/react";
 import { useGSAP } from "@gsap/react";
-import { ensureGsapRegistered, gsap } from "@/lib/gsap";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle } from "@/lib/gsap";
 import { SectionEyebrow, reveal } from "../shared";
 
 const STEPS = [
@@ -52,35 +52,40 @@ export function HowItWorksSection() {
       ensureGsapRegistered();
       const mm = gsap.matchMedia();
 
-      // The signature moment of the page: on desktop, the section pins
-      // and the three steps translate sideways as you keep scrolling
-      // down, instead of the usual vertical stack. Mobile gets the plain
-      // stacked layout below -- horizontal-scroll-via-pin reads poorly
-      // on a phone where vertical scroll is the only expected gesture.
-      mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
-        const track = trackRef.current;
-        const pinTarget = pinRef.current;
-        if (!track || !pinTarget) return;
+      const idle = scheduleIdle(() => {
+        // The signature moment of the page: on desktop, the section pins
+        // and the three steps translate sideways as you keep scrolling
+        // down, instead of the usual vertical stack. Mobile gets the plain
+        // stacked layout below -- horizontal-scroll-via-pin reads poorly
+        // on a phone where vertical scroll is the only expected gesture.
+        mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
+          const track = trackRef.current;
+          const pinTarget = pinRef.current;
+          if (!track || !pinTarget) return;
 
-        const distance = () => Math.max(track.scrollWidth - window.innerWidth, 0);
+          const distance = () => Math.max(track.scrollWidth - window.innerWidth, 0);
 
-        const tween = gsap.to(track, {
-          x: () => -distance(),
-          ease: "none",
-          scrollTrigger: {
-            trigger: pinTarget,
-            start: "top top",
-            end: () => `+=${distance()}`,
-            scrub: 1,
-            pin: true,
-            invalidateOnRefresh: true,
-          },
+          const tween = gsap.to(track, {
+            x: () => -distance(),
+            ease: "none",
+            scrollTrigger: {
+              trigger: pinTarget,
+              start: "top top",
+              end: () => `+=${distance()}`,
+              scrub: 1,
+              pin: true,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          return () => tween.scrollTrigger?.kill();
         });
-
-        return () => tween.scrollTrigger?.kill();
       });
 
-      return () => mm.revert();
+      return () => {
+        cancelIdle(idle);
+        mm.revert();
+      };
     },
     { scope: sectionRef }
   );
