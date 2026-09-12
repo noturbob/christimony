@@ -1,14 +1,13 @@
 "use client";
 
-import { motion } from "motion/react";
-import { SectionEyebrow, reveal } from "../shared";
+import { Reveal, SectionEyebrow } from "../shared";
 import { MagneticLink } from "../magnetic-link";
 import { ArrowGlyph } from "../icons";
 
 export function FinalCtaSection() {
   return (
     <section data-testid="final-cta-section" className="border-t border-[#e2dacb] bg-[#24463b] px-5 py-28 text-center text-[#faf6ef] lg:py-40">
-      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={reveal} className="mx-auto max-w-[780px]">
+      <Reveal className="mx-auto max-w-[780px]">
         <SectionEyebrow dark>For the life you&apos;re hoping to build</SectionEyebrow>
 
         <h2 data-testid="final-cta-headline" className="font-heading text-[clamp(3rem,6vw,5.8rem)] leading-[0.93] tracking-[-0.07em]">
@@ -22,7 +21,7 @@ export function FinalCtaSection() {
         >
           Get started with Christimony <ArrowGlyph className="ml-2 size-4" />
         </MagneticLink>
-      </motion.div>
+      </Reveal>
     </section>
   );
 }

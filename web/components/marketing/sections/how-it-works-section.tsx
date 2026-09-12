@@ -1,10 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { motion } from "motion/react";
 import { useGSAP } from "@gsap/react";
 import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle } from "@/lib/gsap";
-import { SectionEyebrow, reveal } from "../shared";
+import { Reveal, SectionEyebrow } from "../shared";
 
 const STEPS = [
   {
@@ -94,7 +93,7 @@ export function HowItWorksSection() {
     <section ref={sectionRef} id="how-it-works" data-testid="how-it-works-section">
       {/* Mobile / reduced-motion: plain vertical stack */}
       <div className="mx-auto max-w-[1240px] px-5 py-24 lg:hidden">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }} variants={reveal}>
+        <Reveal>
           <SectionEyebrow>How it works</SectionEyebrow>
           <h2 data-testid="how-it-works-headline" className="max-w-[430px] font-heading text-[clamp(2.8rem,5vw,4.5rem)] leading-[0.98] tracking-[-0.06em]">
             A search with room for <em className="font-normal text-[#7a2e2e]">meaning.</em>
@@ -102,22 +101,15 @@ export function HowItWorksSection() {
           <p data-testid="how-it-works-description" className="mt-6 max-w-[330px] text-[15px] leading-6 text-[#1b1b18]/60">
             Less noise. More context. A path that respects the weight of the decision you&apos;re making.
           </p>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          data-testid="steps-list"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ staggerChildren: 0.14 }}
-          className="mt-14 space-y-11"
-        >
-          {STEPS.map((step) => (
-            <motion.div key={step.number} variants={reveal}>
+        <div data-testid="steps-list" className="mt-14 space-y-11">
+          {STEPS.map((step, index) => (
+            <Reveal key={step.number} delay={index * 140}>
               <StepCard step={step} />
-            </motion.div>
+            </Reveal>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {/* Desktop: pinned horizontal scroll */}

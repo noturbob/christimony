@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { SectionEyebrow, faqs, reveal } from "../shared";
+import { Reveal, SectionEyebrow, faqs } from "../shared";
 import { PlusMinusGlyph } from "../icons";
 
 export function FaqSection() {
@@ -10,12 +9,12 @@ export function FaqSection() {
 
   return (
     <section id="faq" data-testid="faq-section" className="mx-auto max-w-[950px] px-5 py-24 lg:py-36">
-      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }} variants={reveal} className="mb-12">
+      <Reveal className="mb-12">
         <SectionEyebrow>Good questions</SectionEyebrow>
         <h2 data-testid="faq-headline" className="font-heading text-[clamp(2.8rem,5vw,4.6rem)] leading-[0.96] tracking-[-0.06em]">
           Clarity is part of <em className="font-normal text-[#7a2e2e]">care.</em>
         </h2>
-      </motion.div>
+      </Reveal>
 
       <div data-testid="faq-list" className="border-t border-[#e2dacb]">
         {faqs.map((faq, index) => {
@@ -45,20 +44,22 @@ export function FaqSection() {
                 </span>
               </button>
 
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    data-testid={`faq-answer-${index + 1}`}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="max-w-[760px] pb-7 pr-12 text-sm leading-6 text-[#1b1b18]/65">{faq.answer}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* An accordion in normal flow has to move the content below it,
+                  so some layout-affecting property genuinely has to animate --
+                  `max-height` between two definite lengths is the option that
+                  behaves the same in every engine. Not `grid-template-rows:
+                  0fr -> 1fr`: on an auto-height single-row container WebKit
+                  sizes the row from its content instead of collapsing it, so
+                  the "closed" state never closes. */}
+              <div
+                data-testid={`faq-answer-${index + 1}`}
+                inert={!isOpen}
+                className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${
+                  isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
+              >
+                <p className="max-w-[760px] pb-7 pr-12 text-sm leading-6 text-[#1b1b18]/65">{faq.answer}</p>
+              </div>
             </div>
           );
         })}

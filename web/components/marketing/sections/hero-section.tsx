@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
@@ -10,23 +9,38 @@ import { SectionEyebrow } from "../shared";
 import { ArrowGlyph } from "../icons";
 
 export function HeroSection() {
-  const reduceMotion = useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
-
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const heroTextureY = useTransform(heroProgress, [0, 1], [0, 90]);
+  const textureRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      if (reduceMotion || !headlineRef.current) return;
+      // Releases the CSS hero entrance (see `.hero-intro` in globals.css).
+      // useGSAP runs in a layout effect, so this lands before the first
+      // hydrated paint.
+      if (heroRef.current) heroRef.current.dataset.heroIntro = "ready";
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!headlineRef.current) return;
       ensureGsapRegistered();
 
+      const mm = gsap.matchMedia();
       let split: ReturnType<typeof SplitText.create> | undefined;
       const idle = scheduleIdle(() => {
+        // See family-section: the dot field parallaxes on pointer-fine only.
+        mm.add("(pointer: fine)", () => {
+          const tween = gsap.fromTo(
+            textureRef.current,
+            { y: 0 },
+            {
+              y: 90,
+              ease: "none",
+              scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: true },
+            }
+          );
+          return () => tween.scrollTrigger?.kill();
+        });
+
         split = SplitText.create(headlineRef.current!, {
           type: "lines",
           mask: "lines",
@@ -44,10 +58,11 @@ export function HeroSection() {
 
       return () => {
         cancelIdle(idle);
+        mm.revert();
         split?.revert();
       };
     },
-    { scope: heroRef, dependencies: [reduceMotion] }
+    { scope: heroRef }
   );
 
   return (
@@ -56,21 +71,16 @@ export function HeroSection() {
       data-testid="hero-section"
       className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden bg-[#24463b] text-[#faf6ef]"
     >
-      <motion.div
+      <div
+        ref={textureRef}
         data-testid="hero-dot-texture"
-        style={reduceMotion ? undefined : { y: heroTextureY }}
         className="pointer-events-none absolute inset-0 -z-10 opacity-40 [background-image:radial-gradient(rgba(250,246,239,0.28)_0.7px,transparent_0.7px)] [background-size:22px_22px]"
       />
 
       <div className="absolute -right-24 top-24 -z-10 size-[420px] rounded-full bg-[#7a2e2e]/20 blur-[90px]" />
 
       <div className="mx-auto flex w-full max-w-[1240px] flex-col px-5 py-16 lg:flex-row lg:items-end lg:gap-14 lg:px-8 lg:py-24">
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, delay: 0.08 }}
-          className="relative z-10 max-w-[700px] lg:w-[56%]"
-        >
+        <div className="hero-intro relative z-10 max-w-[700px] [animation-delay:80ms] lg:w-[56%]">
           <SectionEyebrow dark>For the seriously hopeful</SectionEyebrow>
 
           <h1
@@ -107,14 +117,9 @@ export function HeroSection() {
           <div data-testid="hero-trust-note" className="mt-8 text-xs text-[#faf6ef]/55">
             Intentions first. Privacy always.
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 32, rotate: 2 }}
-          animate={{ opacity: 1, y: 0, rotate: 2 }}
-          transition={{ duration: 0.9, delay: 0.22 }}
-          className="relative mt-14 ml-auto w-[87%] max-w-[500px] lg:mt-0 lg:w-[42%]"
-        >
+        <div className="hero-intro hero-intro-tilted relative mt-14 ml-auto w-[87%] max-w-[500px] [animation-delay:220ms] lg:mt-0 lg:w-[42%]">
           <div className="absolute -inset-3 rounded-[2rem] border border-[#faf6ef]/20" />
 
           <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem] shadow-2xl">
@@ -125,6 +130,7 @@ export function HeroSection() {
               width={1264}
               height={848}
               preload
+              sizes="(min-width: 1024px) 42vw, 87vw"
               className="h-full w-full object-cover"
             />
           </div>
@@ -136,7 +142,7 @@ export function HeroSection() {
             <p className="font-heading text-xl leading-none">A slower way to find each other.</p>
             <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-[#1b1b18]/50">Built around real life</p>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <div className="absolute bottom-6 left-5 text-[10px] uppercase tracking-[0.22em] text-[#faf6ef]/45 lg:left-8">

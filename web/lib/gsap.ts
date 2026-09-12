@@ -31,7 +31,13 @@ export function ensureGsapRegistered() {
 // across separate idle slices instead of one long blocking task.
 export function scheduleIdle(callback: () => void): number {
   if (typeof window.requestIdleCallback === "function") {
-    return window.requestIdleCallback(callback);
+    // The timeout is not optional in practice: an idle callback only runs
+    // when a frame has slack left over, and this page spends its first
+    // second with the preloader's timeline (and, on desktop, Lenis) asking
+    // for a frame every 16ms. Without an upper bound these callbacks can be
+    // pushed back indefinitely, which is how sections ended up finishing
+    // their setup long after the content was on screen.
+    return window.requestIdleCallback(callback, { timeout: 300 });
   }
   return window.setTimeout(callback, 1) as unknown as number;
 }

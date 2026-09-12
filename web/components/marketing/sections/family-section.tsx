@@ -1,21 +1,48 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { SectionEyebrow, reveal } from "../shared";
+import { useGSAP } from "@gsap/react";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle } from "@/lib/gsap";
+import { Reveal, SectionEyebrow } from "../shared";
 import { ArrowGlyph } from "../icons";
 
 export function FamilySection() {
-  const reduceMotion = useReducedMotion();
   const featureRef = useRef<HTMLElement>(null);
+  const textureRef = useRef<HTMLDivElement>(null);
 
-  const { scrollYProgress: featureProgress } = useScroll({
-    target: featureRef,
-    offset: ["start end", "end start"],
-  });
-  const featureTextureY = useTransform(featureProgress, [0, 1], [-35, 45]);
+  useGSAP(
+    () => {
+      ensureGsapRegistered();
+      const mm = gsap.matchMedia();
+
+      const idle = scheduleIdle(() => {
+        // Pointer-fine only: this is a decorative dot field, and scrubbing a
+        // viewport-sized layer's transform on every scroll frame is a cost a
+        // phone pays on the one thread it also needs for the scroll itself.
+        // Desktop keeps the parallax; touch gets the same texture, static.
+        mm.add("(pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
+          const tween = gsap.fromTo(
+            textureRef.current,
+            { y: -35 },
+            {
+              y: 45,
+              ease: "none",
+              scrollTrigger: { trigger: featureRef.current, start: "top bottom", end: "bottom top", scrub: true },
+            }
+          );
+          return () => tween.scrollTrigger?.kill();
+        });
+      });
+
+      return () => {
+        cancelIdle(idle);
+        mm.revert();
+      };
+    },
+    { scope: featureRef }
+  );
 
   return (
     <section
@@ -23,28 +50,22 @@ export function FamilySection() {
       data-testid="family-feature-section"
       className="relative isolate overflow-hidden bg-[#7a2e2e] px-5 py-24 text-[#faf6ef] lg:px-8 lg:py-32"
     >
-      <motion.div
+      <div
+        ref={textureRef}
         data-testid="family-feature-texture"
-        style={reduceMotion ? undefined : { y: featureTextureY }}
         className="pointer-events-none absolute inset-0 -z-10 opacity-35 [background-image:radial-gradient(rgba(250,246,239,0.26)_0.7px,transparent_0.7px)] [background-size:24px_24px]"
       />
 
       <div className="mx-auto grid max-w-[1180px] gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start lg:gap-24">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }} variants={reveal}>
+        <Reveal>
           <SectionEyebrow dark>Our signature difference</SectionEyebrow>
           <h2 data-testid="family-feature-headline" className="max-w-[580px] font-heading text-[clamp(3rem,5.8vw,5.5rem)] leading-[0.91] tracking-[-0.065em]">
             Family‑guided. <em className="font-normal text-[#f1c7b7]">Never family‑decided.</em>
           </h2>
           <div data-testid="family-feature-rule" className="mt-10 h-px w-24 bg-[#faf6ef]/40" />
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.25 }}
-          variants={reveal}
-          className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-stretch"
-        >
+        <Reveal className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-stretch">
           <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem] md:aspect-auto md:h-full md:min-h-[320px]">
             <Image
               data-testid="family-feature-image"
@@ -53,6 +74,7 @@ export function FamilySection() {
               width={1264}
               height={848}
               loading="lazy"
+              sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
               className="h-full w-full object-cover transition duration-500 hover:scale-105"
             />
           </div>
@@ -74,7 +96,7 @@ export function FamilySection() {
               Explore the idea <ArrowGlyph className="ml-2 size-4" />
             </Link>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );
