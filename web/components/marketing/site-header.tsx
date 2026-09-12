@@ -81,35 +81,35 @@ export function SiteHeader() {
         </button>
       </nav>
 
-      {/* CSS-only accordion instead of animating `height` (which forces a
-          synchronous layout pass on every frame via JS measurement -- a
-          well-known jank source on iOS Safari's layout path). This uses
-          `max-height` rather than the `grid-template-rows: 0fr -> 1fr`
-          trick: that trick only resolves unambiguously when the grid
-          container has a definite size to distribute, and on an
-          auto-height single-row container (our case), WebKit falls back
-          to sizing the row from the content's own height instead of
-          collapsing it -- so the "closed" state stayed visibly expanded
-          on iOS. `max-height: 0` uses a definite length on both ends, so
-          it collapses correctly everywhere. The generous cap is well
-          above this menu's actual content height, just clipped by
-          overflow-hidden; that only costs a slightly non-linear ease,
-          imperceptible over 300ms. Content stays mounted, so `inert`
-          takes it out of tab order/hit-testing while closed instead of
-          unmounting it. */}
+      {/* Third attempt at this panel, and the first that animates nothing
+          the layout engine has to re-run. `height` (Framer) and then
+          `max-height` are both layout-affecting: WebKit re-lays-out and
+          repaints the header subtree on every frame of the transition,
+          which is what read as "chunky". `transform` is one of the few
+          properties WebKit resolves on the compositor, so that's all that
+          moves here: the panel sits at its natural height inside an
+          overflow-hidden box and slides up out of it by exactly 100% of
+          its own height. Because it's `absolute`, the box never changes
+          the header's height either -- zero layout, open or closed.
+          (`grid-template-rows: 0fr -> 1fr` is not an option: on an
+          auto-height single-row container WebKit sizes the row from its
+          content rather than collapsing it, so the closed state stayed
+          visibly open.) The border can go back to being unconditional --
+          a border-top does paint regardless of its box's height, but this
+          one is on the translated panel, above the clip, not on the
+          clipping box itself. `pointer-events-none` is what actually lets
+          taps through to the page while closed; `inert` is for focus and
+          the accessibility tree. */}
       <div
         data-testid="mobile-navigation-menu"
         inert={!mobileOpen}
-        className={`overflow-hidden transition-[max-height] duration-300 ease-out md:hidden ${
-          mobileOpen ? "max-h-96" : "max-h-0"
-        }`}
+        className={`absolute inset-x-0 top-full overflow-hidden md:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
       >
-        {/* The border lives here, gated on mobileOpen, rather than being
-            unconditional -- a border-top paints at its full width
-            regardless of the box's height, so an always-on border here
-            would draw a permanent hairline under the header even while
-            this div is collapsed to 0 height. */}
-        <div className={`bg-[#faf6ef] px-5 pb-6 ${mobileOpen ? "border-t border-[#e2dacb]" : ""}`}>
+        <div
+          className={`border-t border-[#e2dacb] bg-[#faf6ef] px-5 pb-6 transition-transform duration-300 ease-out will-change-transform ${
+            mobileOpen ? "[transform:translateY(0)]" : "[transform:translateY(-100%)]"
+          }`}
+        >
           <div className="flex flex-col gap-4 pt-5">
             <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
               How it works

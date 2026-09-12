@@ -1,10 +1,62 @@
-import Link from "next/link";
-import type { Variants } from "motion/react";
+"use client";
 
-export const reveal: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-};
+import { useEffect, useRef } from "react";
+import Link from "next/link";
+
+// Fade/rise-in on first scroll into view. This used to be a Framer Motion
+// `whileInView` variant; the animation itself is two composited properties
+// and needs no animation library, and dropping Framer Motion from this route
+// takes ~146KB of JS (~49KB gzipped, roughly a sixth of the landing page's
+// total) off the parse/hydrate path -- which is exactly the path the page
+// was stalling on. The observer fires once and disconnects; everything after
+// that is a plain CSS transition (see `.reveal` in app/globals.css).
+export function Reveal({
+  children,
+  className,
+  delay,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      el.dataset.revealed = "true";
+      return;
+    }
+
+    // Deliberately threshold 0 with a bottom margin rather than a fractional
+    // threshold: several of these blocks are taller than a phone viewport, and
+    // a "25% of the element is visible" threshold can never be satisfied for
+    // those -- the content would simply stay invisible.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        el.dataset.revealed = "true";
+        io.disconnect();
+      },
+      { rootMargin: "0px 0px -12% 0px" }
+    );
+    io.observe(el);
+
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className ? `reveal ${className}` : "reveal"}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    >
+      {children}
+    </div>
+  );
+}
 
 export const DENOMINATIONS = [
   "Roman Catholic",

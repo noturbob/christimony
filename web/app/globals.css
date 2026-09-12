@@ -130,6 +130,83 @@
   margin-block: -0.16em;
 }
 
+/* Hero entrance. Previously a Framer Motion `animate` prop; as a keyframe
+   animation nothing runs on the main thread while it plays. It is gated on
+   `[data-hero-intro="ready"]`, which hero-section.tsx sets in a layout effect,
+   so it still starts on mount exactly like the Framer version did -- the
+   headline's SplitText reveal is scheduled off the same mount, and letting
+   this one start earlier (at first paint) would leave the headline sitting
+   fully visible and then snapping back to animate in. Longhands rather than
+   the `animation` shorthand on purpose: these rules are unlayered, so a
+   shorthand would win over -- and reset -- the Tailwind `[animation-delay:*]`
+   utility the markup uses to stagger the two columns. The second column keeps
+   a permanent 2deg tilt, so its keyframes carry the rotation at both ends. */
+@keyframes hero-intro-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hero-intro-in-tilted {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0) rotate(2deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(2deg);
+  }
+}
+.hero-intro {
+  opacity: 0;
+}
+[data-hero-intro="ready"] .hero-intro {
+  animation-name: hero-intro-in;
+  animation-duration: 0.75s;
+  animation-timing-function: var(--ease-out-quart);
+  animation-fill-mode: both;
+}
+[data-hero-intro="ready"] .hero-intro-tilted {
+  animation-name: hero-intro-in-tilted;
+  animation-duration: 0.9s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-intro {
+    opacity: 1;
+    animation-name: none;
+  }
+  .hero-intro-tilted {
+    transform: rotate(2deg);
+  }
+}
+
+/* Marketing in-view reveal. Only opacity and transform change, so once the
+   element is promoted the whole animation runs on the compositor with no
+   layout or paint per frame -- and, unlike a JS animation library, nothing
+   runs on the main thread at all while it plays. The `data-revealed` flag is
+   flipped once by an IntersectionObserver (see <Reveal> in
+   components/marketing/shared.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 0.7s var(--ease-out-quart),
+    transform 0.7s var(--ease-out-quart);
+}
+.reveal[data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+  }
+}
+
 @keyframes shake {
   10%, 90% { transform: translateX(-1px); }
   20%, 80% { transform: translateX(2px); }
