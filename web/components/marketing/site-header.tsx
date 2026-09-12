@@ -96,7 +96,12 @@ export function SiteHeader() {
           mobileOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
-        <div className="overflow-hidden border-t border-[#e2dacb] bg-[#faf6ef] px-5 pb-6">
+        {/* The border lives here, gated on mobileOpen, rather than being
+            unconditional -- a border-top paints at its full width
+            regardless of the box's height, so an always-on border here
+            would draw a permanent hairline under the header even while
+            this div is collapsed to 0 height. */}
+        <div className={`overflow-hidden bg-[#faf6ef] px-5 pb-6 ${mobileOpen ? "border-t border-[#e2dacb]" : ""}`}>
           <div className="flex flex-col gap-4 pt-5">
             <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
               How it works
