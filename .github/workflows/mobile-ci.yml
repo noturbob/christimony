@@ -40,7 +40,7 @@ jobs:
         run: git diff --exit-code
 
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --fatal-infos
 
       - name: Enforce feature isolation and Dio containment
         run: ./tool/check_isolation.sh
