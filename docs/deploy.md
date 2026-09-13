@@ -40,10 +40,22 @@ deploy is.
    names in step 3, since the app doesn't read Railway's names directly
    (see "Why the database env vars look the way they do" below).
 
-2. **Add a second service from this repo**, pointing at the `backend/`
-   directory as the build context (Railway supports a per-service root
-   directory in a monorepo). It'll detect the `Dockerfile` and build
-   from it — no other build configuration needed.
+2. **Add a second service from this repo, then point it at `backend/`.**
+   This is a monorepo (`backend/`, `web/`, `mobile/`, `docs/` all live at
+   the same top level), and Railway's default builder (Railpack) scans
+   whatever directory the service is rooted at — if you just connect the
+   repo and deploy without changing anything, it scans the repo **root**,
+   finds no recognizable app there (the `Dockerfile` is inside
+   `backend/`, not at the top level), and fails with something like:
+   ```
+   ✖ Railpack could not determine how to build the app.
+   ```
+   Fix: open the service → **Settings → Source → Root Directory** → set
+   it to `backend`. Once Railway is scanning the right directory it
+   auto-detects the `Dockerfile` there and switches its builder from
+   Railpack to Docker on its own — no other build configuration needed.
+
+
 
 3. **Set the environment variables.** `backend/.env.production.example`
    lists every var the app reads, grouped by whether it's required,
@@ -134,6 +146,11 @@ or create the three extra databases yourself ahead of time.
 
 ## Troubleshooting
 
+- **Build fails with "Railpack could not determine how to build the
+  app" (or your platform's equivalent auto-detection failure), listing
+  `backend/`, `web/`, `mobile/`, `docs/` as the scanned contents:** the
+  service is building from the repo root instead of `backend/` — see
+  step 2 above.
 - **500 on every request, HTML body with a stack trace:** the app
   booted but is missing `RAILS_MASTER_KEY`, or it's the wrong value
   (doesn't match the key `config/credentials.yml.enc` was encrypted
