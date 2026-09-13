@@ -19,7 +19,9 @@ real and tested:
   box), so local testing needs a physical device over `adb`.
 - ✅ Project scaffold: `app.christimony` bundle id on both platforms,
   feature-first directory layout (`lib/core`, `lib/domain`, `lib/data`,
-  `lib/features`, `lib/ui`) matching the plan's §2.
+  and eventually `lib/features`, `lib/ui`) matching the plan's §2 — the
+  latter two land once real screens/components exist, see Directory map
+  below.
 - ✅ Full dependency set resolved and pinned (`pubspec.lock`) — Riverpod 3,
   go_router, Dio, freezed/json_serializable, and the rest of the plan's
   §4.1 list.
@@ -157,15 +159,20 @@ lib/
   core/           theme, networking (Dio + interceptors + error mapping), storage, config
   domain/models/  freezed API response models
   data/           the ChristimonyApi facade + (future) per-resource repositories
-  features/       one folder per screen area (auth, onboarding, discover, ...) --
-                  empty scaffolding today, screens land in later phases
-  ui/             the shared component kit -- empty today, see plan §3.5
   dev/            debug-only tooling; currently the Design Gallery
 test/             mirrors lib/ -- unit tests for pure functions, HTTP-contract
                   tests for the envelope machinery, one widget test for the app shell
 tool/
   check_isolation.sh   CI check: no cross-feature imports, no Dio outside core/network
 ```
+
+`lib/features/` (one folder per screen area — auth, onboarding, discover, ...)
+and `lib/ui/` (the shared component kit, plan §3.5) don't exist yet — Git
+doesn't track empty directories, so pre-creating them as scaffolding
+doesn't actually reserve anything and it broke CI once already (see
+`tool/check_isolation.sh`'s `[ -d lib/features ]` guard). They'll appear
+for real once the first feature/component lands, per the plan's phase
+order.
 
 ## Verification
 
