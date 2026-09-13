@@ -61,6 +61,37 @@ class IntroductionTest < ActiveSupport::TestCase
     assert_equal "declined", @introduction.status
   end
 
+  test "accepting an already-accepted introduction again is a no-op, not a duplicate Match" do
+    @introduction.accept!(@ward_a)
+    @introduction.accept!(@ward_b)
+    assert_equal "accepted", @introduction.status
+
+    assert_no_difference "Match.count" do
+      @introduction.accept!(@ward_a)
+      @introduction.accept!(@ward_b)
+    end
+    assert_equal "accepted", @introduction.status
+  end
+
+  test "declining an already-declined introduction again is a no-op" do
+    @introduction.decline!(@ward_a)
+
+    assert_no_changes -> { @introduction.reload.updated_at } do
+      @introduction.decline!(@ward_b)
+    end
+    assert_equal "declined", @introduction.status
+  end
+
+  test "declining an already-accepted introduction is a no-op, not a status downgrade" do
+    @introduction.accept!(@ward_a)
+    @introduction.accept!(@ward_b)
+    assert_equal "accepted", @introduction.status
+
+    @introduction.decline!(@ward_a)
+
+    assert_equal "accepted", @introduction.status
+  end
+
   test "raises if a profile not part of the introduction tries to accept" do
     stranger = Profile.create!(name: "Stranger", profile_type: "ward", status: "active")
 

@@ -148,6 +148,7 @@ Any controller can protect its actions with `before_action :authenticate_account
 - `POST /api/v1/introductions/:id/accept` — body: `{ "ward_profile_id": <id> }`
 - `POST /api/v1/introductions/:id/decline` — same body shape
 - A real `Match` between the two wards is only created once both have accepted
+- Both actions are idempotent once the introduction is resolved (`accepted`/`declined`) — a repeat call is a safe no-op, not a duplicate `Match` or a status downgrade back to `declined`
 
 ### Conversations & Messages
 - `GET /api/v1/conversations` — includes `unread_count` per conversation
