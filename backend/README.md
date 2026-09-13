@@ -28,10 +28,12 @@ Run the test suite with `bin/rails test`, style with `bin/rubocop`, and a securi
 
 ### Environment variables
 
-None are required for local development — everything has a safe default (Postgres on localhost, `SMS_PROVIDER=log`, local disk storage). For anything beyond that:
+None are required for local development — everything has a safe default (Postgres on localhost, `SMS_PROVIDER=log`, local disk storage). For a production deploy, see [`docs/deploy.md`](../docs/deploy.md) for the full walkthrough and [`.env.production.example`](.env.production.example) for every var with a placeholder value and an explanation of what happens if it's left unset. Summary:
 
 | Variable | Purpose | Default |
 |---|---|---|
+| `BACKEND_DATABASE_HOST`, `BACKEND_DATABASE_PASSWORD` | Postgres connection, production only. `HOST` matters more than it looks: omitting it makes `libpq` connect over a local Unix socket, which only works if Postgres runs on the same machine as the app (true for Kamal, false for a managed Postgres add-on on Railway/Render/Fly) | — |
+| `BACKEND_DATABASE_PORT`, `BACKEND_DATABASE_USERNAME` | Same connection, only needed if your host doesn't use Postgres' default port or assigns its own username instead of letting you create a `backend` role | `5432`, `backend` |
 | `CORS_ORIGINS` | Comma-separated list of allowed origins, in addition to any `*.vercel.app` subdomain (always allowed) | `http://localhost:3001` |
 | `SMS_PROVIDER` | `log` \| `twilio` \| `msg91` | `log` (prints the OTP to the Rails log; also returned as `dev_code` in the API response when `RAILS_ENV=development`) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | Required when `SMS_PROVIDER=twilio` | — |
@@ -40,8 +42,7 @@ None are required for local development — everything has a safe default (Postg
 | `APP_HOST`, `APP_PROTOCOL` | Host used to build absolute URLs (e.g. photo URLs) outside of a request context | — |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID — verifies the ID token's `aud` claim server-side (`app/services/oauth/google_verifier.rb`). Must match the frontend's `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (see `../web/README.md`) | — |
 | `APPLE_CLIENT_IDS` | Comma-separated list of accepted Apple audiences (`app/services/oauth/apple_verifier.rb`). Apple's `aud` claim differs per client surface: the web flow's Services ID (matching the frontend's `NEXT_PUBLIC_APPLE_CLIENT_ID`) **and** each native app's bundle id (e.g. `app.christimony`) need to be listed — a single value can't satisfy both | — |
-| `RAILS_MASTER_KEY` | Required in production to decrypt `config/credentials.yml.enc` | — |
-| `DATABASE_URL` | Standard Rails database URL, production only | — |
+| `RAILS_MASTER_KEY` | Required in production to decrypt `config/credentials.yml.enc` (the content of `config/master.key`, gitignored — never commit it) | — |
 
 ## Core Design Concept: Parent/Ward Accounts
 

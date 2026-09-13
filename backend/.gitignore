@@ -7,8 +7,11 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files.
+# Ignore all environment files, except the checked-in placeholder
+# template that documents which vars a deploy needs (see docs/deploy.md)
+# -- it holds no real secrets, only placeholder values.
 /.env*
+!/.env.production.example
 
 # Ignore all logfiles and tempfiles.
 /log/*
