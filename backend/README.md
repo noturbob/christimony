@@ -168,6 +168,7 @@ Any controller can protect its actions with `before_action :authenticate_account
 - Automated test suite (`bin/rails test`) covers models plus the phone-auth, OAuth, and messages-authorization controllers — 70 tests, all passing; Brakeman reports zero warnings.
 - Verified manually end-to-end via curl: the full phone OTP flow including rate-limit and lockout behavior, the photo upload → thumbnail-variant → reorder pipeline, feed pagination and filters, and both authorization fixes below.
 - Two access-control bugs fixed: `GET /conversations/:id/messages` used to return any conversation's messages to any authenticated account regardless of participation; `POST /profiles/:id/vouches` used to accept a vouch from any authenticated account for any profile. Both now check `ProfileAccess`/participation.
+- Base controller now `rescue_from`s `ActionController::ParameterMissing`, `ActiveRecord::RecordInvalid`, and `ActiveRecord::RecordNotFound` as clean JSON instead of Rails' default HTML error page (which includes a full stack trace in development). Note: `POST /profiles` happens to accept a body without the `{"profile": {...}}` wrapper too, because Rails' `wrap_parameters_by_default` (from `config.load_defaults 8.1`) synthesizes it — this is coincidental to that endpoint's inferred wrap key matching what the controller requires, not a documented guarantee, and doesn't hold for every nested-body endpoint (e.g. `POST /profiles/:id/prompts` still requires the `{"prompt": {...}}` wrapper explicitly). Don't rely on it from a client.
 
 ## Not Yet Built
 
