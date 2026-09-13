@@ -10,7 +10,7 @@ The Next.js frontend for Christimony, a Hinge/Bumble-style matrimony platform fo
 - **Styling:** Tailwind CSS v4 (CSS-first config, no `tailwind.config.*`) + shadcn (`base-nova` style, on `@base-ui/react`, not Radix)
 - **In-app animation:** [`motion`](https://motion.dev) (Framer Motion's successor) — swipe gestures, layout transitions, accordions
 - **Marketing-page animation:** GSAP 3.15 (`ScrollTrigger`, `SplitText`) + [Lenis](https://lenis.darkroom.engineering) smooth scroll
-- **Auth:** httpOnly cookie session, proxied to the Rails API by this app's own route handlers (see below) — no token ever reaches client JS
+- **Auth:** phone OTP or Google/Apple Sign-In (no email/password anywhere — see below), fronted by an httpOnly cookie session that this app's own route handlers proxy to the Rails API — no token ever reaches client JS
 
 ## Getting Started
 
@@ -25,20 +25,30 @@ By convention this project's dev server runs on **3001** locally (`PORT=3001 npm
 
 ### Environment variables
 
-`.env.local` (gitignored) is only needed to point at a non-default Rails API:
+`.env.local` (gitignored):
 
 ```bash
+# Points at a non-default Rails API. Server-only (no NEXT_PUBLIC_ prefix)
+# -- read by route handlers and Server Components, never inlined into
+# client JS. On Vercel, set it for both Production and Preview.
 API_BASE_URL=http://localhost:3000/api/v1
+
+# Both optional and independent -- each sign-in button only renders when
+# its client ID is set (see components/oauth-buttons.tsx). These ARE
+# public identifiers (NEXT_PUBLIC_), safe to expose to client JS.
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=       # Web application OAuth client, from Google Cloud Console
+NEXT_PUBLIC_APPLE_CLIENT_ID=        # Services ID, from the Apple Developer portal
+NEXT_PUBLIC_APPLE_REDIRECT_URI=     # Must match a return URL registered under that Services ID
 ```
 
-This is a **server-only** variable (no `NEXT_PUBLIC_` prefix) — it's read by Next.js route handlers and Server Components, never inlined into client JS. On Vercel, set it to the deployed Rails API's URL (Production and Preview environments both need it).
+The matching Rails-side `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_ID` (used to verify the ID token server-side) are documented in `../backend/README.md`.
 
 ## Architecture: cookie + BFF auth
 
 The frontend does not hold a JWT in `localStorage` or any other place client JS can read. Instead:
 
 1. `lib/session.ts` defines an httpOnly, `SameSite=Lax` cookie (`christimony_session`) that holds the raw Rails JWT.
-2. `app/api/auth/session/route.ts` sets/clears that cookie — called right after a successful login/signup/OTP-verify.
+2. `app/api/auth/session/route.ts` sets/clears that cookie — called right after a successful OTP verify or Google/Apple sign-in (`establishSession` in `lib/auth-context.tsx`, shared by both paths).
 3. `app/api/bff/[...path]/route.ts` is a proxy: every client-side API call goes to same-origin `/api/bff/*`, which attaches the cookie's token as `Authorization: Bearer <token>` and forwards to Rails. A `401` from Rails clears the cookie automatically. This is also why the browser never needs Rails' CORS configuration — it only ever talks to itself.
 4. `proxy.ts` (Next 16's renamed `middleware.ts`) redirects unauthenticated requests to app routes → `/login`, and authenticated requests to `/login`/`/verify`/`/signup` → `/discover`, entirely server-side (no client-side flash).
 5. `(main)/layout.tsx` and `onboarding/layout.tsx` fetch the account **once**, server-side (`lib/server-api.ts`, which calls Rails directly — no BFF hop needed since it already has the cookie), and hydrate it into `AuthContext` via `components/hydrate-auth.tsx`. Every page under those layouts can just call `useAuth()` and trust the account is there — no more per-page `loading` + `redirect-if-missing` boilerplate.
@@ -50,10 +60,9 @@ The frontend does not hold a JWT in `localStorage` or any other place client JS 
 ```
 app/
   page.tsx                    "/"        marketing landing page (static prerender)
-  login/page.tsx               "/login"                phone number entry
-  login/email/page.tsx         "/login/email"          email+password fallback
+  login/page.tsx               "/login"                phone number entry + Google/Apple buttons
   verify/page.tsx               "/verify"               6-digit OTP entry
-  signup/page.tsx                "/signup"               email+password signup (also phone-first via /login)
+  signup/page.tsx                "/signup"               same phone-first form as /login, signup-flavored copy
   onboarding/[step]/page.tsx    "/onboarding/:step"     11-step profile-creation wizard
   (main)/                                                the tabbed app shell (bottom nav), session-gated
     discover/                   "/discover"             swipeable card stack
@@ -68,7 +77,7 @@ app/
     bff/[...path]/route.ts       proxies every other API call to Rails
 ```
 
-`app/login`, `app/signup`, and `app/verify` stay static (`○` in the build output) since they read no request-time API; everything under `(main)/` and `app/onboarding/` is dynamic (`ƒ`) since their layouts read the session cookie. Verify this with `npm run build` after any auth-related change — the route table at the end of the build output is the source of truth.
+`app/login`, `app/signup`, and `app/verify` stay static (`○` in the build output) since they read no request-time API; everything under `(main)/` and `app/onboarding/` is dynamic (`ƒ`) since their layouts read the session cookie. `components/oauth-buttons.tsx` is the one client component both `/login` and `/signup` share for the Google/Apple flow: Google's own GSI script (`accounts.google.com/gsi/client`) renders its button into a ref div, Apple's popup flow (`appleid.auth.js`, `usePopup: true`) is triggered from a plain button — both post the resulting ID token to `POST /auth/google` or `/auth/apple` via `lib/oauth.ts`, then follow the same `establishSession` → onboarding-or-discover redirect as phone verify. Verify the static/dynamic split with `npm run build` after any auth-related change — the route table at the end of the build output is the source of truth.
 
 ## Design tokens
 
@@ -86,6 +95,8 @@ Composed from `components/marketing/`:
 Notable choreography: a masked line-by-line headline reveal on the hero (GSAP `SplitText` + `mask: "lines"`), a word-by-word opacity scrub on the denomination quote, and a pinned horizontal scroll through the three "how it works" steps on desktop (`gsap.matchMedia("(min-width: 1024px)")` — mobile gets a plain vertical stack instead, and everything degrades to instant, un-animated final states under `prefers-reduced-motion: reduce`).
 
 Hero and family images live in `public/images/` and are served through `next/image` (automatic AVIF/WebP + resizing on Vercel) rather than hotlinked from an external CDN.
+
+**No Framer Motion on this route** (`motion` is still a dependency — the in-app screens use it, see Tech Stack above). It shipped ~146KB (~49KB gz) for effects that are all opacity/transform/max-height — things CSS already does natively — so the marketing route's in-view fades are a plain IntersectionObserver + CSS transition (`<Reveal>` in `components/marketing/shared.tsx`) instead. Lenis' smooth scroll is skipped entirely on coarse pointers (touch devices already get native scrolling from the platform) — see `lenis-provider.tsx`. If you're adding a new animated section here, follow this pattern rather than reaching for `motion`.
 
 ## Known gaps
 
