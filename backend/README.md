@@ -39,7 +39,7 @@ None are required for local development — everything has a safe default (Postg
 | `S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_ENDPOINT` | Object storage for profile photos in production. `S3_ENDPOINT` is only needed for R2/non-AWS providers. Falls back to local disk if `S3_BUCKET` is unset | — |
 | `APP_HOST`, `APP_PROTOCOL` | Host used to build absolute URLs (e.g. photo URLs) outside of a request context | — |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID — verifies the ID token's `aud` claim server-side (`app/services/oauth/google_verifier.rb`). Must match the frontend's `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (see `../web/README.md`) | — |
-| `APPLE_CLIENT_ID` | Apple Services ID — same role for Sign in with Apple (`app/services/oauth/apple_verifier.rb`). Must match the frontend's `NEXT_PUBLIC_APPLE_CLIENT_ID` | — |
+| `APPLE_CLIENT_IDS` | Comma-separated list of accepted Apple audiences (`app/services/oauth/apple_verifier.rb`). Apple's `aud` claim differs per client surface: the web flow's Services ID (matching the frontend's `NEXT_PUBLIC_APPLE_CLIENT_ID`) **and** each native app's bundle id (e.g. `app.christimony`) need to be listed — a single value can't satisfy both | — |
 | `RAILS_MASTER_KEY` | Required in production to decrypt `config/credentials.yml.enc` | — |
 | `DATABASE_URL` | Standard Rails database URL, production only | — |
 
@@ -75,7 +75,7 @@ Token-based (JWT), not cookie/session-based, since this API serves clients direc
 
 - `POST /api/v1/auth/phone/start` — body `{ "phone": "9876543210" }`. Issues and sends a 6-digit OTP (5 min expiry, locks out after 5 failed attempts, 30s resend cooldown, capped at 5 sends/hour/phone). Never reveals whether an account already exists for that number.
 - `POST /api/v1/auth/phone/verify` — body `{ "phone": "...", "code": "123456" }`. On success, finds or creates the account, marks the phone verified, and returns a token.
-- `POST /api/v1/auth/google` / `POST /api/v1/auth/apple` — body `{ "id_token": "..." }`, the provider's own signed ID token from the client-side sign-in SDK. Verified server-side against `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_ID` (`app/services/oauth/`), then finds or creates the account by `(oauth_provider, oauth_uid)`. If the token's email isn't already claimed by another account, it's attached — but only opportunistically; a taken email never fails the sign-in.
+- `POST /api/v1/auth/google` / `POST /api/v1/auth/apple` — body `{ "id_token": "..." }`, the provider's own signed ID token from the client-side sign-in SDK. Verified server-side against `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_IDS` (`app/services/oauth/`), then finds or creates the account by `(oauth_provider, oauth_uid)`. If the token's email isn't already claimed by another account, it's attached — but only opportunistically; a taken email never fails the sign-in. Google needs only one accepted audience since a native app passing `serverClientId: <web client id>` to `GoogleSignIn` produces a token whose `aud` is that same web client id; Apple needs the list (see `APPLE_CLIENT_IDS` above) because native `sign_in_with_apple` puts the app's bundle id in `aud` instead of the web Services ID.
 - `GET /api/v1/me` — protected; returns the current account.
 
 The three sign-in endpoints (phone verify, Google, Apple) all return the **same** envelope:
