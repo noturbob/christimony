@@ -7,13 +7,26 @@ class Introduction < ApplicationRecord
     in: %w[pending_both pending_a pending_b accepted declined]
   }
 
+  # Both accept! and decline! are idempotent no-ops once the introduction
+  # is resolved (accepted or declined) -- a repeat call (client retry,
+  # double-tap, stale UI) must never re-run the side effect. Before this
+  # guard, calling accept! again on an already-"accepted" introduction fell
+  # through advance_status's `case status` with no matching branch (there
+  # was no `when "accepted"`), leaving status unchanged at "accepted" --
+  # but the create_ward_match! call right after the case block only checks
+  # the CURRENT status, not whether this call caused a transition, so it
+  # fired again anyway and created a duplicate Match every time.
   def accept!(ward)
+    unless ward.id == ward_a_id || ward.id == ward_b_id
+      raise ArgumentError, "this profile is not part of this introduction"
+    end
+
+    return if resolved?
+
     if ward.id == ward_a_id
       advance_status(accepted_side: :a)
-    elsif ward.id == ward_b_id
-      advance_status(accepted_side: :b)
     else
-      raise ArgumentError, "this profile is not part of this introduction"
+      advance_status(accepted_side: :b)
     end
   end
 
@@ -22,10 +35,19 @@ class Introduction < ApplicationRecord
       raise ArgumentError, "this profile is not part of this introduction"
     end
 
+    # Also stops a decline from ever landing on an already-"accepted"
+    # introduction, which would desync its status from the real Match
+    # that accepting it already created.
+    return if resolved?
+
     update!(status: "declined")
   end
 
   private
+
+  def resolved?
+    status.in?(%w[accepted declined])
+  end
 
   def advance_status(accepted_side:)
     case status
