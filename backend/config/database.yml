@@ -88,8 +88,23 @@ production:
   primary: &primary_production
     <<: *default
     database: backend_production
-    username: backend
+    # Defaults to "backend" for a Kamal-style deploy where you provision
+    # the role yourself. A managed Postgres addon (Railway/Render/Fly)
+    # assigns its own username (often "postgres" or something generated)
+    # that you can't rename -- set BACKEND_DATABASE_USERNAME to whatever
+    # it gives you.
+    username: <%= ENV.fetch("BACKEND_DATABASE_USERNAME", "backend") %>
     password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
+    # Omitting host/port entirely makes libpq connect over a local Unix
+    # socket, which only works when Postgres runs on the SAME machine as
+    # this app (e.g. a Kamal deploy with a colocated db accessory). Every
+    # managed-Postgres PaaS (Railway, Render, Fly's standard offering)
+    # runs Postgres as a separate host, so it needs a real TCP host/port.
+    # Leave BACKEND_DATABASE_HOST unset for the same-machine case --
+    # an empty host string makes libpq fall back to the Unix socket, so
+    # this doesn't change the Kamal path at all.
+    host: <%= ENV["BACKEND_DATABASE_HOST"] %>
+    port: <%= ENV.fetch("BACKEND_DATABASE_PORT", 5432) %>
   cache:
     <<: *primary_production
     database: backend_production_cache

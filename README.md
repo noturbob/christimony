@@ -51,6 +51,6 @@ There's no third terminal for `mobile/` yet in the useful sense — no screens e
 ## Status
 
 - ✅ **Frontend** deployed to Vercel and working end-to-end for the marketing page; phone login, Google/Apple sign-in, onboarding, and the app screens are built and tested against a local backend but need a deployed API to work in production.
-- ⏳ **Backend** is not deployed anywhere yet. It's a standard Rails 8 API (Dockerfile included) — Railway, Fly.io, or Render all work with minimal setup. Once deployed, set `API_BASE_URL` (web) and `CORS_ORIGINS` (backend, if the frontend isn't on `*.vercel.app`) accordingly.
+- ⏳ **Backend** is not deployed anywhere yet. It's a standard Rails 8 API (Dockerfile included) — Railway, Fly.io, or Render all work with minimal setup; see [`docs/deploy.md`](docs/deploy.md) for the full walkthrough and env-var manifest. Once deployed, set `API_BASE_URL` (web) and `CORS_ORIGINS` (backend, if the frontend isn't on `*.vercel.app`) accordingly.
 - 🏗️ **Mobile** is an early Flutter scaffold — toolchain, design tokens, and the networking core are built and tested (40 tests, `flutter analyze` clean), but no actual screens exist yet. See `mobile/README.md` for exactly what's there.
 - ⏳ Payments (Razorpay), real KYC verification, and real-time messaging (ActionCable/Solid Cable) are designed for but not wired up — see `backend/README.md`'s "Not Yet Built".
