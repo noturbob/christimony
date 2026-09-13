@@ -51,9 +51,18 @@ deploy is.
    ✖ Railpack could not determine how to build the app.
    ```
    Fix: open the service → **Settings → Source → Root Directory** → set
-   it to `backend`. Once Railway is scanning the right directory it
-   auto-detects the `Dockerfile` there and switches its builder from
-   Railpack to Docker on its own — no other build configuration needed.
+   it to `/backend` (leading slash — that's the exact form Railway's own
+   docs use, and the field is picky about it). **This only applies to
+   deployments created after you save it** — it does not retroactively
+   fix a build that's already running or queued, so after saving,
+   explicitly click Deploy/Redeploy rather than assuming the next
+   automatic build will pick it up. Once Railway is scanning the right
+   directory it auto-detects the `Dockerfile` there and switches its
+   builder from Railpack to Docker on its own — no other build
+   configuration needed. (Config-as-code `railway.json`/`railway.toml`
+   can declare a lot of Railway service config, but *not* this setting —
+   Root Directory is dashboard/CLI/API-only, so there's no way to pin it
+   in a file this repo could ship.)
 
 
 
@@ -150,7 +159,12 @@ or create the three extra databases yourself ahead of time.
   app" (or your platform's equivalent auto-detection failure), listing
   `backend/`, `web/`, `mobile/`, `docs/` as the scanned contents:** the
   service is building from the repo root instead of `backend/` — see
-  step 2 above.
+  step 2 above. If you already set Root Directory and get the *exact
+  same* failure again, the most likely cause isn't the value itself —
+  it's that the build shown was already queued/running before the
+  setting saved. Reload the settings page to confirm it still shows
+  `/backend`, then explicitly trigger a new deployment rather than
+  waiting.
 - **500 on every request, HTML body with a stack trace:** the app
   booted but is missing `RAILS_MASTER_KEY`, or it's the wrong value
   (doesn't match the key `config/credentials.yml.enc` was encrypted
