@@ -14,18 +14,23 @@ cd "$(dirname "$0")/.."
 fail=0
 
 echo "Checking for cross-feature imports..."
-for dir in lib/features/*/; do
-  feature=$(basename "$dir")
-  others=$(find lib/features -mindepth 1 -maxdepth 1 -type d ! -name "$feature" -exec basename {} \;)
-  for other in $others; do
-    hits=$(grep -rn "features/$other/" "$dir" --include="*.dart" || true)
-    if [ -n "$hits" ]; then
-      echo "✗ lib/features/$feature imports lib/features/$other:"
-      echo "$hits"
-      fail=1
-    fi
+if [ -d lib/features ]; then
+  for dir in lib/features/*/; do
+    [ -d "$dir" ] || continue   # no subdirectories yet -- nothing to check
+    feature=$(basename "$dir")
+    others=$(find lib/features -mindepth 1 -maxdepth 1 -type d ! -name "$feature" -exec basename {} \;)
+    for other in $others; do
+      hits=$(grep -rn "features/$other/" "$dir" --include="*.dart" || true)
+      if [ -n "$hits" ]; then
+        echo "✗ lib/features/$feature imports lib/features/$other:"
+        echo "$hits"
+        fail=1
+      fi
+    done
   done
-done
+else
+  echo "  (lib/features/ doesn't exist yet -- nothing to check)"
+fi
 
 echo "Checking that Dio is only imported under lib/core/network/ or lib/data/api/..."
 hits=$(grep -rln "^import 'package:dio/dio.dart'" lib --include="*.dart" \
