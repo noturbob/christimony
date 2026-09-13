@@ -50,6 +50,15 @@ real and tested:
 - ✅ 40 passing tests: `flutter analyze` is clean, `dart format` is
   clean, and `tool/check_isolation.sh` (the "no cross-feature imports, no
   Dio outside `core/network`" CI check) passes.
+- ⚠️ CI (`.github/workflows/mobile-ci.yml`) has caught two real bugs so
+  far that only reproduced on a fresh checkout, not locally — both were
+  empty directories (`assets/images/`, `lib/features/`) that Git doesn't
+  track, so they existed on the dev machine but not in the actual commit.
+  As of this writing CI has not yet run its last two steps
+  (`flutter test`, `flutter build apk --debug`) in any single green run —
+  they're each blocked by whatever step failed before them. Don't take
+  "CI is set up" to mean "CI has verified the whole pipeline end to end"
+  until a run actually reaches and passes all of it.
 
 What's **not** built yet — see the plan's phases 4–12: no screens for
 auth, onboarding, discover, matches, messages, introductions, or profile;
