@@ -31,10 +31,10 @@ export function CheckGlyph(props: SvgProps) {
 export function PlusMinusGlyph({ open, className, ...props }: { open: boolean; className?: string } & React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span className={`relative block ${className ?? "size-3.5"}`} aria-hidden="true" {...props}>
-      <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-current" />
+      <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-current" />
       <span
-        className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-current transition-transform duration-300"
-        style={{ transform: open ? "translateY(-50%) rotate(90deg)" : "translateY(-50%) rotate(0deg)" }}
+        className="absolute inset-y-0 left-1/2 w-px bg-current transition-transform duration-300"
+        style={{ transform: open ? "translateX(-50%) rotate(90deg) scaleY(0)" : "translateX(-50%)" }}
       />
     </span>
   );

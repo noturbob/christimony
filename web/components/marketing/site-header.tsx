@@ -23,21 +23,21 @@ export function SiteHeader() {
       data-testid="site-header"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-300 ${
-        scrolled ? "bg-[#faf6ef]/95 shadow-[0_1px_0_rgba(27,27,24,0.08)] backdrop-blur-md" : "bg-transparent"
+        scrolled ? "bg-[#0f1311]/80 shadow-[0_1px_0_var(--line)] backdrop-blur-md" : "bg-transparent"
       }`}
     >
       <nav
         data-testid="primary-navigation"
         aria-label="Primary navigation"
-        className="mx-auto flex h-[76px] max-w-[1240px] items-center justify-between px-5 lg:px-8"
+        className="mx-auto flex h-[76px] max-w-[1280px] items-center justify-between px-5 lg:px-8"
       >
-        <Wordmark testId="header-brand-wordmark" light={!scrolled} />
+        <Wordmark testId="header-brand-wordmark" />
 
-        <div data-testid="desktop-navigation-links" className="hidden items-center gap-8 md:flex">
+        <div data-testid="desktop-navigation-links" className="hidden items-center gap-7 md:flex">
           <Link
             data-testid="nav-how-it-works-link"
             href="#how-it-works"
-            className={`text-[13px] font-medium transition-colors hover:text-[#7a2e2e] ${scrolled ? "text-[#1b1b18]/70" : "text-[#faf6ef]/75"}`}
+            className="text-[16px] text-[var(--chalk)]/70 transition-colors hover:text-[var(--chalk)]"
           >
             How it works
           </Link>
@@ -45,7 +45,7 @@ export function SiteHeader() {
           <Link
             data-testid="nav-faq-link"
             href="#faq"
-            className={`text-[13px] font-medium transition-colors hover:text-[#7a2e2e] ${scrolled ? "text-[#1b1b18]/70" : "text-[#faf6ef]/75"}`}
+            className="text-[16px] text-[var(--chalk)]/70 transition-colors hover:text-[var(--chalk)]"
           >
             Questions
           </Link>
@@ -53,7 +53,7 @@ export function SiteHeader() {
           <Link
             data-testid="nav-login-link"
             href="/login"
-            className={`text-[13px] font-medium transition-colors hover:text-[#7a2e2e] ${scrolled ? "text-[#1b1b18]/70" : "text-[#faf6ef]/75"}`}
+            className="text-[16px] text-[var(--chalk)]/70 transition-colors hover:text-[var(--chalk)]"
           >
             Log in
           </Link>
@@ -61,11 +61,9 @@ export function SiteHeader() {
           <Link
             data-testid="nav-get-started-link"
             href="/signup"
-            className={`rounded-full px-5 py-2.5 text-[13px] font-semibold transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-              scrolled ? "bg-[#24463b] text-[#faf6ef]" : "bg-[#faf6ef] text-[#24463b]"
-            }`}
+            className="pill pill-cta !px-5 !py-2.5 !text-[15px]"
           >
-            Get started <ArrowGlyph className="ml-1 inline size-3.5" />
+            Get started <ArrowGlyph className="size-3.5" />
           </Link>
         </div>
 
@@ -75,7 +73,7 @@ export function SiteHeader() {
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(!mobileOpen)}
-          className={`grid size-10 place-items-center rounded-full md:hidden ${scrolled ? "text-[#1b1b18]" : "text-[#faf6ef]"}`}
+          className="grid size-10 place-items-center rounded-full text-[var(--chalk)] md:hidden"
         >
           <MenuGlyph open={mobileOpen} className="size-4" />
         </button>
@@ -106,27 +104,27 @@ export function SiteHeader() {
         className={`absolute inset-x-0 top-full overflow-hidden md:hidden ${mobileOpen ? "" : "pointer-events-none"}`}
       >
         <div
-          className={`border-t border-[#e2dacb] bg-[#faf6ef] px-5 pb-6 transition-transform duration-300 ease-out will-change-transform ${
+          className={`border-b border-[var(--line)] bg-[var(--ink)] px-5 pb-8 transition-transform duration-300 ease-out will-change-transform ${
             mobileOpen ? "[transform:translateY(0)]" : "[transform:translateY(-100%)]"
           }`}
         >
-          <div className="flex flex-col gap-4 pt-5">
-            <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="font-medium">
+          <div className="flex flex-col gap-5 pt-6 text-[34px] font-semibold leading-none tracking-[-0.03em]">
+            <Link data-testid="mobile-how-it-works-link" href="#how-it-works" onClick={closeMobile} className="transition-colors hover:text-[var(--sage)]">
               How it works
             </Link>
-            <Link data-testid="mobile-faq-link" href="#faq" onClick={closeMobile} className="font-medium">
+            <Link data-testid="mobile-faq-link" href="#faq" onClick={closeMobile} className="transition-colors hover:text-[var(--sage)]">
               Questions
             </Link>
-            <Link data-testid="mobile-login-link" href="/login" onClick={closeMobile} className="font-medium">
+            <Link data-testid="mobile-login-link" href="/login" onClick={closeMobile} className="transition-colors hover:text-[var(--sage)]">
               Log in
             </Link>
             <Link
               data-testid="mobile-get-started-link"
               href="/signup"
               onClick={closeMobile}
-              className="rounded-full bg-[#24463b] px-5 py-3 text-center font-semibold text-[#faf6ef]"
+              className="pill pill-cta mt-3 w-full"
             >
-              Get started <ArrowGlyph className="ml-1 inline size-4" />
+              Get started <ArrowGlyph className="size-4" />
             </Link>
           </div>
         </div>

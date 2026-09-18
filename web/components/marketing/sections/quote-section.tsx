@@ -17,7 +17,7 @@ export function QuoteSection() {
       const idle = scheduleIdle(() => {
         split = SplitText.create(quoteRef.current, { type: "words" });
 
-        gsap.set(split.words, { opacity: 0.15 });
+        gsap.set(split.words, { opacity: 0.12 });
         gsap.to(split.words, {
           opacity: 1,
           stagger: 0.06,
@@ -40,19 +40,20 @@ export function QuoteSection() {
   );
 
   return (
-    <section data-testid="denomination-quote-section" className="border-y border-[#e2dacb] bg-[#e2dacb]/45 px-5 py-24 text-center lg:py-36">
-      <div className="mx-auto max-w-[980px]">
-        <DiamondGlyph data-testid="quote-sparkle-icon" className="mx-auto mb-7 size-3.5 text-[#7a2e2e]" />
+    <section data-testid="denomination-quote-section" className="border-y border-[var(--line)] px-5 py-28 lg:py-44">
+      <div className="mx-auto max-w-[1216px]">
+        <DiamondGlyph data-testid="quote-sparkle-icon" className="mb-8 size-4 text-[var(--gold)]" />
 
         <blockquote
           ref={quoteRef}
           data-testid="denomination-quote"
-          className="font-heading text-[clamp(2.5rem,5.1vw,5rem)] leading-[0.98] tracking-[-0.06em]"
+          className="text-[clamp(2.5rem,6.6vw,6.3rem)] font-semibold leading-[1] tracking-[-0.045em]"
         >
-          &quot;Your denomination is not a footnote. It can be part of the <em className="font-normal text-[#7a2e2e]">foundation.</em>&quot;
+          &ldquo;Your denomination is not a footnote. It can be part of the{" "}
+          <em className="serif-italic text-[var(--gold)]">foundation.</em>&rdquo;
         </blockquote>
 
-        <p data-testid="denomination-quote-caption" className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-[#1b1b18]/50">
+        <p data-testid="denomination-quote-caption" className="mt-10 text-[16px] text-[var(--chalk-50)] sm:text-[19px]">
           Catholic · Orthodox · Pentecostal · Baptist · and more
         </p>
       </div>

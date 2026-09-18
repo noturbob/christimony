@@ -1,65 +1,59 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, SplitText } from "@/lib/gsap";
 import { SectionEyebrow } from "../shared";
 import { ArrowGlyph } from "../icons";
+import { PixelPortrait } from "../pixel-portrait";
+
+const LINES = ["Marriage,", "sought with", "intention."];
 
 export function HeroSection() {
   const heroRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
-  const textureRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      // Releases the CSS hero entrance (see `.hero-intro` in globals.css).
-      // useGSAP runs in a layout effect, so this lands before the first
-      // hydrated paint.
+      // Releases the CSS entrance on everything but the headline (see
+      // `.hero-intro` in globals.css). useGSAP runs in a layout effect, so
+      // this lands before the first hydrated paint.
       if (heroRef.current) heroRef.current.dataset.heroIntro = "ready";
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      if (!headlineRef.current) return;
       ensureGsapRegistered();
 
+      const q = gsap.utils.selector(heroRef);
       const mm = gsap.matchMedia();
-      let split: ReturnType<typeof SplitText.create> | undefined;
-      const idle = scheduleIdle(() => {
-        // See family-section: the dot field parallaxes on pointer-fine only.
-        mm.add("(pointer: fine)", () => {
-          const tween = gsap.fromTo(
-            textureRef.current,
-            { y: 0 },
-            {
-              y: 90,
-              ease: "none",
-              scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: true },
-            }
-          );
-          return () => tween.scrollTrigger?.kill();
-        });
+      const splits: ReturnType<typeof SplitText.create>[] = [];
 
-        split = SplitText.create(headlineRef.current!, {
-          type: "lines",
-          mask: "lines",
-          linesClass: "line",
-          autoSplit: true,
-          onSplit: (self) => {
-            return gsap.fromTo(
-              self.lines,
-              { yPercent: 110 },
-              { yPercent: 0, duration: 1, ease: "power4.out", stagger: 0.09, delay: 0.35 }
-            );
-          },
+      // The lines are explicit (one per span), so only chars need splitting;
+      // the per-line `overflow-hidden` span is the mask.
+      q(".hero-line-text").forEach((el) => splits.push(SplitText.create(el, { type: "chars" })));
+      const chars = splits.flatMap((s) => s.chars);
+
+      gsap
+        .timeline({ delay: 0.25 })
+        .fromTo(chars, { yPercent: 110 }, { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.022 });
+
+      // The headline lines sliding apart on scroll is pointer-fine only: extra per-frame scroll work is
+      // a cost a phone pays on the same thread it needs for the scroll.
+      const idle = scheduleIdle(() => {
+        mm.add("(pointer: fine)", () => {
+          const tl = gsap.timeline({
+            defaults: { ease: "none" },
+            scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: true },
+          });
+          q(".hero-line").forEach((line, i) => tl.to(line, { xPercent: i % 2 ? 12 : -12 }, 0));
+          return () => tl.scrollTrigger?.kill();
         });
       });
 
       return () => {
         cancelIdle(idle);
         mm.revert();
-        split?.revert();
+        splits.forEach((s) => s.revert());
       };
     },
     { scope: heroRef }
@@ -69,84 +63,59 @@ export function HeroSection() {
     <section
       ref={heroRef}
       data-testid="hero-section"
-      className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden bg-[#24463b] text-[#faf6ef]"
+      className="relative isolate flex min-h-dvh flex-col justify-end overflow-hidden pb-10 pt-32 lg:pb-14"
     >
-      <div
-        ref={textureRef}
-        data-testid="hero-dot-texture"
-        className="pointer-events-none absolute inset-0 -z-10 opacity-40 [background-image:radial-gradient(rgba(250,246,239,0.28)_0.7px,transparent_0.7px)] [background-size:22px_22px]"
-      />
+      {/* Pixel-art couple on the right, opposite the headline. On phones it
+          sits in the empty space above the text instead. */}
+      <PixelPortrait className="absolute right-0 top-[72px] -z-10 flex h-[22vh] w-[70vw] items-start justify-end lg:right-[3vw] lg:top-[12vh] lg:h-[72vh] lg:w-[46vw]" />
 
-      <div className="absolute -right-24 top-24 -z-10 size-[420px] rounded-full bg-[#7a2e2e]/20 blur-[90px]" />
-
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col px-5 py-16 lg:flex-row lg:items-end lg:gap-14 lg:px-8 lg:py-24">
-        <div className="hero-intro relative z-10 max-w-[700px] [animation-delay:80ms] lg:w-[56%]">
-          <SectionEyebrow dark>For the seriously hopeful</SectionEyebrow>
-
-          <h1
-            ref={headlineRef}
-            data-testid="hero-headline"
-            className="max-w-[700px] font-heading text-[clamp(3.3rem,7.4vw,5.8rem)] leading-[0.94] tracking-[-0.065em]"
-          >
-            Marriage, sought with intention. <em className="font-normal text-[#e6b9a9]">Not swiped past.</em>
-          </h1>
-
-          <p data-testid="hero-subheadline" className="mt-7 max-w-[520px] text-[17px] leading-7 text-[#faf6ef]/72">
-            A modern matrimony platform for Christians looking for a spouse, shaped by faith, clear intentions, and
-            the people who love you.
-          </p>
-
-          <div data-testid="hero-cta-group" className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link
-              data-testid="hero-get-started-link"
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-full bg-[#faf6ef] px-6 py-3.5 text-sm font-semibold text-[#24463b] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-xl"
-            >
-              Begin your search <ArrowGlyph className="ml-2 size-4" />
-            </Link>
-
-            <Link
-              data-testid="hero-learn-more-link"
-              href="#how-it-works"
-              className="inline-flex items-center justify-center rounded-full border border-[#faf6ef]/40 px-6 py-3.5 text-sm font-semibold text-[#faf6ef] transition duration-200 hover:-translate-y-1 hover:border-[#faf6ef]"
-            >
-              See how it works <ArrowGlyph direction="down" className="ml-2 size-4" />
-            </Link>
-          </div>
-
-          <div data-testid="hero-trust-note" className="mt-8 text-xs text-[#faf6ef]/55">
-            Intentions first. Privacy always.
-          </div>
-        </div>
-
-        <div className="hero-intro hero-intro-tilted relative mt-14 ml-auto w-[87%] max-w-[500px] [animation-delay:220ms] lg:mt-0 lg:w-[42%]">
-          <div className="absolute -inset-3 rounded-[2rem] border border-[#faf6ef]/20" />
-
-          <div className="aspect-[1264/848] w-full overflow-hidden rounded-[1.7rem] shadow-2xl">
-            <Image
-              data-testid="hero-couple-image"
-              src="/images/hero-couple.jpg"
-              alt="A couple walking together through a sunlit garden"
-              width={1264}
-              height={848}
-              preload
-              sizes="(min-width: 1024px) 42vw, 87vw"
-              className="h-full w-full object-cover"
-            />
-          </div>
-
-          <div
-            data-testid="hero-image-caption"
-            className="absolute -bottom-5 -left-5 max-w-[230px] rounded-2xl bg-[#faf6ef] p-4 text-[#1b1b18] shadow-xl"
-          >
-            <p className="font-heading text-xl leading-none">A slower way to find each other.</p>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-[#1b1b18]/50">Built around real life</p>
-          </div>
-        </div>
+      <div className="hero-intro px-5 lg:px-8">
+        <SectionEyebrow>For the seriously hopeful</SectionEyebrow>
       </div>
 
-      <div className="absolute bottom-6 left-5 text-[10px] uppercase tracking-[0.22em] text-[#faf6ef]/45 lg:left-8">
-        01 / 09
+      {/* No max-width container on purpose: the display type runs to the
+          viewport edge. */}
+      <h1
+        ref={headlineRef}
+        data-testid="hero-headline"
+        aria-label="Marriage, sought with intention. Not swiped past."
+        className="px-4 text-[clamp(3rem,min(11vw,19vh),14rem)] font-semibold leading-[0.9] tracking-[-0.045em] lg:px-6"
+      >
+        {LINES.map((line) => (
+          <span key={line} aria-hidden className="hero-line block overflow-hidden whitespace-nowrap">
+            <span className="hero-line-text inline-block">{line}</span>
+          </span>
+        ))}
+        <span
+          aria-hidden
+          className="hero-intro serif-italic text-gradient-warm mt-[0.1em] block text-[0.36em] leading-[1.1] [animation-delay:900ms]"
+        >
+          — not swiped past.
+        </span>
+      </h1>
+
+      <div className="mt-12 flex flex-col gap-8 px-5 lg:mt-16 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+        <p
+          data-testid="hero-subheadline"
+          className="hero-intro max-w-[520px] text-[19px] leading-[1.38] text-[var(--chalk)]/80 [animation-delay:700ms] lg:text-[23px]"
+        >
+          A modern matrimony platform for Christians looking for a spouse, shaped by faith, clear intentions, and the
+          people who love you.
+        </p>
+
+        <div className="hero-intro flex flex-col items-start gap-4 [animation-delay:850ms] lg:items-end">
+          <div data-testid="hero-cta-group" className="flex flex-col gap-3 sm:flex-row">
+            <Link data-testid="hero-get-started-link" href="/signup" className="pill pill-cta">
+              Begin your search <ArrowGlyph className="size-4" />
+            </Link>
+            <Link data-testid="hero-learn-more-link" href="#how-it-works" className="pill">
+              See how it works <ArrowGlyph direction="down" className="size-4" />
+            </Link>
+          </div>
+          <p data-testid="hero-trust-note" className="text-[14px] text-[var(--chalk)]/70">
+            Intentions first. <span className="text-[var(--sage)]">Privacy always.</span>
+          </p>
+        </div>
       </div>
     </section>
   );

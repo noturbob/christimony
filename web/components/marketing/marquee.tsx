@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle } from "@/lib/gsap";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, ScrollTrigger } from "@/lib/gsap";
 import { DENOMINATIONS } from "./shared";
 
 // Seamless infinite marquee: two identical copies of the list sit side
@@ -25,6 +25,7 @@ export function Marquee() {
       let onEnter: (() => void) | undefined;
       let onLeave: (() => void) | undefined;
       let onVisibilityChange: (() => void) | undefined;
+      let velocity: ScrollTrigger | undefined;
 
       // Reading scrollWidth forces layout, and building the tween is one
       // more thing competing for the main thread during the critical
@@ -38,6 +39,28 @@ export function Marquee() {
           ease: "none",
           repeat: -1,
         });
+        // ponytail: start 100 loops in so a negative timeScale (scrolling up)
+        // has room to run backwards; ~50 min of reverse before it bottoms out.
+        tween.totalTime(tween.duration() * 100);
+
+        // Scroll velocity pushes the marquee along -- and scrolling up runs it
+        // backwards. Pointer-fine only, same reasoning as the other scrubs.
+        if (window.matchMedia("(pointer: fine)").matches) {
+          velocity = ScrollTrigger.create({
+            trigger: track,
+            start: "top bottom",
+            end: "bottom top",
+            onUpdate: (self) => {
+              const boost = gsap.utils.clamp(1, 7, 1 + Math.abs(self.getVelocity()) / 350);
+              gsap.to(tween!, {
+                timeScale: self.direction * boost,
+                duration: 0.25,
+                overwrite: true,
+                onComplete: () => void gsap.to(tween!, { timeScale: self.direction, duration: 1, ease: "power2.out" }),
+              });
+            },
+          });
+        }
 
         onEnter = () => tween?.pause();
         onLeave = () => {
@@ -79,6 +102,8 @@ export function Marquee() {
         if (onLeave) track.removeEventListener("mouseleave", onLeave);
         if (onVisibilityChange) document.removeEventListener("visibilitychange", onVisibilityChange);
         io?.disconnect();
+        velocity?.kill();
+        tween?.kill();
       };
     },
     { scope: trackRef }
@@ -87,12 +112,15 @@ export function Marquee() {
   const items = [...DENOMINATIONS, ...DENOMINATIONS];
 
   return (
-    <div data-testid="denomination-marquee" className="overflow-hidden border-y border-[#e2dacb] bg-[#faf6ef] py-6">
+    <div data-testid="denomination-marquee" className="overflow-hidden border-y border-[var(--line)] py-7 lg:py-9">
       <div ref={trackRef} className="flex w-max items-center gap-10 whitespace-nowrap">
         {items.map((name, i) => (
-          <span key={`${name}-${i}`} className="flex items-center gap-10 text-sm font-medium text-[#1b1b18]/40">
+          <span
+            key={`${name}-${i}`}
+            className="flex items-center gap-10 text-[34px] font-medium tracking-[-0.03em] text-[var(--chalk)]/35 transition-colors duration-300 hover:text-[var(--chalk)] lg:text-[44px]"
+          >
             {name}
-            <span className="text-[#7a2e2e]/40">✦</span>
+            <span className="text-[0.5em] text-[var(--sage)]">✦</span>
           </span>
         ))}
       </div>
