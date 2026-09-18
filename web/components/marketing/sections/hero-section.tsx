@@ -65,9 +65,9 @@ export function HeroSection() {
       data-testid="hero-section"
       className="relative isolate flex min-h-dvh flex-col justify-end overflow-hidden pb-10 pt-32 lg:pb-14"
     >
-      {/* Pixel-art couple on the right, opposite the headline. On phones it
-          sits in the empty space above the text instead. */}
-      <PixelPortrait className="absolute right-0 top-[72px] -z-10 flex h-[22vh] w-[70vw] items-start justify-end lg:right-[3vw] lg:top-[12vh] lg:h-[72vh] lg:w-[46vw]" />
+      {/* Pixel-art couple on the right, opposite the headline. Desktop only:
+          a phone has no room beside the text for it. */}
+      <PixelPortrait className="absolute right-[3vw] top-[12vh] -z-10 hidden h-[72vh] w-[46vw] items-start justify-end lg:flex" />
 
       <div className="hero-intro px-5 lg:px-8">
         <SectionEyebrow>For the seriously hopeful</SectionEyebrow>
