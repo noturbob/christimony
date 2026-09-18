@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthAside } from "@/components/auth-aside";
 import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/oauth-buttons";
@@ -40,15 +41,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-dvh grid lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
-        <span className="font-display text-2xl">Christimony</span>
-        <div>
-          <p className="font-display text-6xl leading-tight max-w-md">
-            Marriage, sought with intention.
-          </p>
-        </div>
-        <p className="text-sm opacity-70">For Christians building a life together.</p>
-      </div>
+      <AuthAside>Marriage, sought with <em className="serif-italic text-primary">intention.</em></AuthAside>
 
       <div className="flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-8">
@@ -57,7 +50,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <h1 className="font-display text-3xl">Welcome back</h1>
+            <h1 className="font-display text-5xl leading-none">Welcome back</h1>
             <p className="text-muted-foreground mt-1">Continue with your phone number or a connected account.</p>
           </div>
 

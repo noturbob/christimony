@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { AuthAside } from "@/components/auth-aside";
 import { useAuth } from "@/lib/auth-context";
 import { startPhoneAuth, verifyPhoneAuth } from "@/lib/phone-auth";
 
@@ -123,7 +124,7 @@ function VerifyForm() {
       </div>
 
       <div>
-        <h1 className="font-display text-3xl">Enter the code</h1>
+        <h1 className="font-display text-5xl leading-none">Enter the code</h1>
         <p className="text-muted-foreground mt-1">We sent a 6-digit code to +91 {phone}.</p>
       </div>
 
@@ -149,7 +150,7 @@ function VerifyForm() {
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
-            className="h-14 w-12 text-center text-xl font-medium rounded-xl border border-input bg-background outline-none focus:ring-2 focus:ring-ring"
+            className="h-14 w-12 text-center text-xl font-medium rounded-2xl border border-input bg-card outline-none focus:border-ring focus:ring-2 focus:ring-ring/40"
           />
         ))}
       </div>
@@ -181,13 +182,7 @@ function VerifyForm() {
 export default function VerifyPage() {
   return (
     <div className="min-h-dvh grid lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
-        <span className="font-display text-2xl">Christimony</span>
-        <div>
-          <p className="font-display text-6xl leading-tight max-w-md">Almost there.</p>
-        </div>
-        <p className="text-sm opacity-70">For Christians building a life together.</p>
-      </div>
+      <AuthAside>Almost <em className="serif-italic text-primary">there.</em></AuthAside>
 
       <div className="flex items-center justify-center p-8">
         <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>

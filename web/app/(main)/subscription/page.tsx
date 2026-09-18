@@ -55,7 +55,7 @@ export default function SubscriptionPage() {
         {PLANS.map((p) => {
           const isCurrent = activeSub?.plan === p.value;
           return (
-            <div key={p.value} className={`rounded-2xl border p-8 flex flex-col gap-4 ${isCurrent ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+            <div key={p.value} className={`rounded-2xl border p-8 flex flex-col gap-4 ${isCurrent ? "border-primary bg-primary/5" : p.value === "premium" ? "gradient-stroke bg-card" : "border-border bg-card"}`}>
               <div className="space-y-1.5">
                 <h3 className="font-display text-2xl">{p.name}</h3>
                 <p className="text-3xl font-medium">{p.price}</p>
