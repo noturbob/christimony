@@ -1,27 +1,38 @@
 "use client";
 
-import { Reveal, SectionEyebrow } from "../shared";
+import { SectionEyebrow, SplitHeading } from "../shared";
 import { MagneticLink } from "../magnetic-link";
 import { ArrowGlyph } from "../icons";
 
 export function FinalCtaSection() {
   return (
-    <section data-testid="final-cta-section" className="border-t border-[#e2dacb] bg-[#24463b] px-5 py-28 text-center text-[#faf6ef] lg:py-40">
-      <Reveal className="mx-auto max-w-[780px]">
-        <SectionEyebrow dark>For the life you&apos;re hoping to build</SectionEyebrow>
+    <section
+      data-testid="final-cta-section"
+      className="relative isolate overflow-hidden border-t border-[var(--line)] px-5 py-32 text-center lg:py-48"
+    >
+      <div className="pointer-events-none absolute -left-20 -top-6 -z-10 size-28 lg:-left-16 lg:top-16 lg:size-64">
+        <div className="blob blob-gold size-full" style={{ "--drift": "15s" } as React.CSSProperties} />
+      </div>
+      <div className="pointer-events-none absolute -bottom-16 -right-24 -z-10 size-44 lg:-right-20 lg:bottom-10 lg:size-96">
+        <div className="blob blob-sage size-full" style={{ "--drift": "22s" } as React.CSSProperties} />
+      </div>
 
-        <h2 data-testid="final-cta-headline" className="font-heading text-[clamp(3rem,6vw,5.8rem)] leading-[0.93] tracking-[-0.07em]">
-          The right search can change your <em className="font-normal text-[#e6b9a9]">whole life.</em>
-        </h2>
+      <div className="mx-auto max-w-[1100px]">
+        <div className="flex justify-center">
+          <SectionEyebrow>For the life you&apos;re hoping to build</SectionEyebrow>
+        </div>
 
-        <MagneticLink
-          data-testid="final-cta-signup-link"
-          href="/signup"
-          className="mt-10 inline-flex items-center rounded-full bg-[#faf6ef] px-7 py-4 text-sm font-semibold text-[#24463b] transition-colors duration-200 hover:bg-white hover:shadow-xl"
+        <SplitHeading
+          testId="final-cta-headline"
+          className="text-[clamp(3rem,8vw,7.5rem)] font-semibold leading-[0.95] tracking-[-0.05em]"
         >
-          Get started with Christimony <ArrowGlyph className="ml-2 size-4" />
+          The right search can change your <em className="serif-italic text-gradient-brand pr-[0.05em]">whole life.</em>
+        </SplitHeading>
+
+        <MagneticLink data-testid="final-cta-signup-link" href="/signup" className="pill pill-cta mt-12 lg:!px-8 lg:!py-5 lg:!text-[19px]">
+          Get started with Christimony <ArrowGlyph className="size-4" />
         </MagneticLink>
-      </Reveal>
+      </div>
     </section>
   );
 }

@@ -61,44 +61,44 @@ export function SiteFooter() {
     <footer
       data-testid="site-footer"
       style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}
-      className="bg-[#1b1b18] px-5 pt-14 text-[#faf6ef] lg:px-8"
+      className="border-t border-[var(--line)] bg-[var(--ink-2)] px-5 pt-16 text-[var(--chalk)] lg:px-8 lg:pt-20"
     >
-      <div className="mx-auto max-w-[1240px]">
+      <div className="mx-auto max-w-[1216px]">
         <div className="flex flex-col gap-9 md:flex-row md:items-end md:justify-between">
           <div>
-            <Wordmark testId="footer-brand-wordmark" light />
-            <p data-testid="footer-tagline" className="mt-5 max-w-[230px] text-sm leading-5 text-[#faf6ef]/45">
+            <Wordmark testId="footer-brand-wordmark" />
+            <p data-testid="footer-tagline" className="mt-5 max-w-[300px] text-[16px] leading-[1.4] text-[var(--chalk-50)]">
               A more intentional way to search for a spouse.
             </p>
           </div>
 
-          <div data-testid="footer-links" className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-[#faf6ef]/60">
-            <Link data-testid="footer-login-link" href="/login" className="transition hover:text-[#faf6ef]">
+          <div data-testid="footer-links" className="flex flex-wrap gap-x-7 gap-y-3 text-[16px] text-[var(--chalk-50)]">
+            <Link data-testid="footer-login-link" href="/login" className="transition hover:text-[var(--chalk)]">
               Log in
             </Link>
-            <Link data-testid="footer-signup-link" href="/signup" className="transition hover:text-[#faf6ef]">
+            <Link data-testid="footer-signup-link" href="/signup" className="transition hover:text-[var(--chalk)]">
               Sign up
             </Link>
-            <Link data-testid="footer-about-link" href="#positioning" className="transition hover:text-[#faf6ef]">
+            <Link data-testid="footer-about-link" href="#positioning" className="transition hover:text-[var(--chalk)]">
               About
             </Link>
-            <Link data-testid="footer-privacy-link" href="#faq" className="transition hover:text-[#faf6ef]">
+            <Link data-testid="footer-privacy-link" href="#faq" className="transition hover:text-[var(--chalk)]">
               Privacy
             </Link>
-            <Link data-testid="footer-terms-link" href="#faq" className="transition hover:text-[#faf6ef]">
+            <Link data-testid="footer-terms-link" href="#faq" className="transition hover:text-[var(--chalk)]">
               Terms
             </Link>
           </div>
 
-          <p data-testid="footer-copyright" className="text-xs text-[#faf6ef]/35">
+          <p data-testid="footer-copyright" className="text-[14px] text-[var(--chalk-50)]">
             © {new Date().getFullYear()} Christimony
           </p>
         </div>
 
-        <div className="mt-14 border-t border-[#faf6ef]/10 pt-8 text-center">
+        <div className="mt-16 border-t border-[var(--line)] pt-8 text-center">
           <div
             ref={bigWordRef}
-            className="relative font-display text-[clamp(2.5rem,13vw,10.5rem)] leading-[1.15] tracking-[-0.05em] text-[#faf6ef] select-none pb-[0.08em]"
+            className="relative text-[clamp(3rem,16.5vw,14rem)] font-semibold leading-[1.05] tracking-[-0.055em] text-[var(--chalk)] select-none pb-[0.08em]"
           >
             Christimony
             {/* Default state is uncovered, so the word is readable if the
@@ -106,11 +106,11 @@ export function SiteFooter() {
                 back to scaleX(1) when it builds the tween. */}
             <span
               aria-hidden
-              className="footer-wordmark-cover pointer-events-none absolute inset-y-0 left-0 w-1/2 origin-left [transform:scaleX(0)] bg-[#1b1b18]"
+              className="footer-wordmark-cover pointer-events-none absolute inset-y-0 left-0 w-1/2 origin-left [transform:scaleX(0)] bg-[var(--ink-2)]"
             />
             <span
               aria-hidden
-              className="footer-wordmark-cover pointer-events-none absolute inset-y-0 right-0 w-1/2 origin-right [transform:scaleX(0)] bg-[#1b1b18]"
+              className="footer-wordmark-cover pointer-events-none absolute inset-y-0 right-0 w-1/2 origin-right [transform:scaleX(0)] bg-[var(--ink-2)]"
             />
           </div>
         </div>

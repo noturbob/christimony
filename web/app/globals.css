@@ -123,24 +123,19 @@
 
 /* SplitText's mask:"lines" wraps each line in an overflow-hidden box sized
    to the (intentionally tight) line-height, which clips ascenders/capitals
-   and descenders on this display serif. Padding gives glyphs room; the
-   matching negative margin cancels it back out so line spacing is unchanged. */
-[data-testid="hero-headline"] .line {
-  padding-block: 0.16em;
-  margin-block: -0.16em;
+   and descenders. Padding gives glyphs room; the matching negative margin
+   cancels it back out so line spacing is unchanged. */
+.split-line,
+.hero-line {
+  padding-block: 0.14em;
+  margin-block: -0.14em;
 }
 
-/* Hero entrance. Previously a Framer Motion `animate` prop; as a keyframe
-   animation nothing runs on the main thread while it plays. It is gated on
-   `[data-hero-intro="ready"]`, which hero-section.tsx sets in a layout effect,
-   so it still starts on mount exactly like the Framer version did -- the
-   headline's SplitText reveal is scheduled off the same mount, and letting
-   this one start earlier (at first paint) would leave the headline sitting
-   fully visible and then snapping back to animate in. Longhands rather than
-   the `animation` shorthand on purpose: these rules are unlayered, so a
-   shorthand would win over -- and reset -- the Tailwind `[animation-delay:*]`
-   utility the markup uses to stagger the two columns. The second column keeps
-   a permanent 2deg tilt, so its keyframes carry the rotation at both ends. */
+/* Hero entrance for everything except the headline (which GSAP splits).
+   Gated on `[data-hero-intro="ready"]`, set by hero-section.tsx in a layout
+   effect, so it starts on mount alongside the headline instead of at first
+   paint. Longhands on purpose: these rules are unlayered, so a shorthand
+   would reset the Tailwind `[animation-delay:*]` utility the markup uses. */
 @keyframes hero-intro-in {
   from {
     opacity: 0;
@@ -151,36 +146,169 @@
     transform: none;
   }
 }
-@keyframes hero-intro-in-tilted {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 32px, 0) rotate(2deg);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(2deg);
-  }
-}
 .hero-intro {
   opacity: 0;
 }
 [data-hero-intro="ready"] .hero-intro {
   animation-name: hero-intro-in;
-  animation-duration: 0.75s;
-  animation-timing-function: var(--ease-out-quart);
-  animation-fill-mode: both;
-}
-[data-hero-intro="ready"] .hero-intro-tilted {
-  animation-name: hero-intro-in-tilted;
   animation-duration: 0.9s;
+  animation-timing-function: var(--ease-out-expo);
+  animation-fill-mode: both;
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-intro {
     opacity: 1;
     animation-name: none;
   }
-  .hero-intro-tilted {
-    transform: rotate(2deg);
+}
+
+/* ------------------------------------------------------------------
+ * Landing page: "chalkboard" theme. A forest-tinted near-black stage,
+ * brand cream as chalk, and one highlighter per part of the product --
+ * colour is taxonomy here, never decoration:
+ *   sage  = Christimony / the brand + primary action
+ *   gold  = browsing / intention
+ *   lilac = pace / connecting
+ *   blush = family
+ * Maroon only ever appears as a deep gradient stop.
+ * ------------------------------------------------------------------ */
+.landing {
+  --ink: #0f1311;
+  --ink-2: #161b18;
+  --line: #2c332e;
+  --chalk: #faf6ef;
+  --chalk-50: #8b877b;
+  --sage: #9fe0b8;
+  --gold: #f2b95c;
+  --lilac: #b8a9ff;
+  --blush: #f1c7b7;
+  --forest: #24463b;
+  --maroon: #7a2e2e;
+  --grad-brand: linear-gradient(114deg, #3fbf86 15%, #c9f5a8 70%);
+
+  font-family: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-optical-sizing: auto;
+  background: var(--ink);
+  color: var(--chalk);
+}
+/* Paint the safe-area strips and overscroll the same ink as the page. */
+html:has(.landing),
+html:has(.landing) body {
+  background: #0f1311;
+}
+.landing ::selection {
+  background: var(--sage);
+  color: var(--ink);
+}
+
+.serif-italic {
+  font-family: var(--font-fraunces-italic), serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.text-gradient-brand {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-warm {
+  background: linear-gradient(100deg, var(--blush) 10%, var(--gold) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Ghost pill: the only button shape on the page. */
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 100px;
+  border: 1px solid color-mix(in srgb, var(--chalk) 80%, transparent);
+  padding: 15px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--chalk);
+  transition:
+    border-color var(--dur-base) var(--ease-out-quart),
+    background-color var(--dur-base) var(--ease-out-quart);
+}
+.pill:hover {
+  border-color: var(--chalk);
+  background-color: color-mix(in srgb, var(--chalk) 6%, transparent);
+}
+.pill svg {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.pill:hover svg:not([style]) {
+  transform: translate(2px, -2px);
+}
+
+/* The one chromatic control: a gradient hairline instead of a cream one.
+   A masked ::before draws the stroke so the fill stays transparent over
+   whatever it sits on. `.gradient-stroke` is the same trick for cards. */
+.pill-cta,
+.gradient-stroke {
+  position: relative;
+  border-color: transparent;
+}
+.pill-cta::before,
+.gradient-stroke::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(114deg, #3fbf86, #c9f5a8, var(--gold), #3fbf86) 0 0 / 300% 100%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: background-position 0.8s var(--ease-out-quart);
+}
+.pill-cta:hover {
+  border-color: transparent;
+}
+.pill-cta:hover::before {
+  background-position: 100% 0;
+}
+
+/* Soft 3D "organic" shapes, lit from within by a radial gradient -- no
+   shadows. They drift on a slow CSS loop (transform only, so it runs on
+   the compositor); GSAP moves a wrapper around them for parallax, which
+   is why the two never fight over the same transform. */
+.blob {
+  border-radius: 58% 42% 55% 45% / 48% 60% 40% 52%;
+  background: radial-gradient(
+    circle at 32% 28%,
+    var(--hi, #fff) 0%,
+    var(--mid, var(--sage)) 38%,
+    var(--lo, var(--forest)) 100%
+  );
+  animation: blob-drift var(--drift, 18s) ease-in-out infinite alternate;
+}
+.blob-sage { --hi: #e9fff1; --mid: var(--sage); --lo: #1f5a43; }
+.blob-gold { --hi: #fff4d6; --mid: var(--gold); --lo: #a4561c; }
+.blob-blush { --hi: #fff1ea; --mid: var(--blush); --lo: var(--maroon); }
+.blob-lilac { --hi: #f1edff; --mid: var(--lilac); --lo: #3b2f86; }
+@keyframes blob-drift {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  to {
+    transform: translate3d(3%, -6%, 0) rotate(28deg) scale(1.06);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blob {
+    animation: none;
   }
 }
 

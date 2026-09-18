@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useGSAP } from "@gsap/react";
+import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, SplitText } from "@/lib/gsap";
 
 // Fade/rise-in on first scroll into view. This used to be a Framer Motion
 // `whileInView` variant; the animation itself is two composited properties
@@ -117,27 +119,78 @@ export const comparisonRows: [string, string][] = [
   ["Connection before clarity", "Intentions made visible early"],
 ];
 
-export function SectionEyebrow({ children, dark = false }: { children: string; dark?: boolean }) {
+// Section headline whose lines rise out of a mask the first time it scrolls
+// into view. Same idle deferral as every other SplitText on the page.
+export function SplitHeading({
+  children,
+  className,
+  testId,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  testId?: string;
+}) {
+  const ref = useRef<HTMLHeadingElement>(null);
+
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      ensureGsapRegistered();
+
+      let split: ReturnType<typeof SplitText.create> | undefined;
+      const idle = scheduleIdle(() => {
+        split = SplitText.create(ref.current!, {
+          type: "lines",
+          mask: "lines",
+          linesClass: "split-line",
+          autoSplit: true,
+          onSplit: (self) =>
+            gsap.from(self.lines, {
+              yPercent: 115,
+              duration: 1.1,
+              ease: "expo.out",
+              stagger: 0.08,
+              scrollTrigger: { trigger: ref.current, start: "top 88%", once: true },
+            }),
+        });
+      });
+
+      return () => {
+        cancelIdle(idle);
+        split?.revert();
+      };
+    },
+    { scope: ref }
+  );
+
+  return (
+    <h2 ref={ref} data-testid={testId} className={className}>
+      {children}
+    </h2>
+  );
+}
+
+// Short sage rule + label: the page's recurring section marker.
+export function SectionEyebrow({ children }: { children: string }) {
   return (
     <p
       data-testid={`section-eyebrow-${children.toLowerCase().replaceAll(" ", "-")}`}
-      className={`mb-5 text-[11px] font-semibold uppercase tracking-[0.24em] ${dark ? "text-[#ead8cb]" : "text-[#7a2e2e]"}`}
+      className="mb-6 flex items-center gap-3 text-[16px] leading-[1.15] text-[var(--chalk)] sm:text-[19px]"
     >
+      <span aria-hidden className="h-px w-8 bg-[var(--sage)]" />
       {children}
     </p>
   );
 }
 
-export function Wordmark({ light = false, testId }: { light?: boolean; testId: string }) {
+export function Wordmark({ testId }: { testId: string }) {
   return (
     <Link
       data-testid={testId}
       href="/"
-      className={`flex items-center gap-2.5 text-[17px] font-semibold tracking-[-0.03em] ${light ? "text-[#faf6ef]" : "text-[#1b1b18]"}`}
+      className="flex items-center gap-2.5 text-[19px] font-semibold tracking-[-0.03em] text-[var(--chalk)]"
     >
-      <span
-        className={`grid size-8 place-items-center rounded-full font-display text-[15px] leading-none ${light ? "bg-[#faf6ef] text-[#24463b]" : "bg-[#24463b] text-[#faf6ef]"}`}
-      >
+      <span className="grid size-8 place-items-center rounded-full bg-[image:var(--grad-brand)] font-display text-[16px] leading-none text-[var(--ink)]">
         C
       </span>
       Christimony

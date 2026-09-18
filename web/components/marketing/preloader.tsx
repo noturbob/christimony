@@ -45,7 +45,7 @@ export function Preloader() {
       onUpdate: () => {
         if (counterRef.current) counterRef.current.textContent = String(Math.round(counter.value));
       },
-    }).to(rootRef.current, { yPercent: -100, duration: 0.4, ease: "power4.inOut" });
+    }).to(rootRef.current, { yPercent: -100, duration: 0.5, ease: "expo.inOut" });
 
     return () => {
       tl.kill();
@@ -61,14 +61,13 @@ export function Preloader() {
   return (
     <div
       ref={rootRef}
-      className="fixed inset-0 z-[100] flex touch-none items-center justify-center overscroll-contain bg-[#24463b] text-[#faf6ef]"
+      className="fixed inset-0 z-[100] flex touch-none flex-col items-center justify-center gap-6 overscroll-contain bg-[#0f1311] text-[#faf6ef]"
     >
-      <div className="flex items-center gap-4">
-        <span className="font-display text-2xl tracking-tight">Christimony</span>
-        <span className="font-mono text-sm tabular-nums opacity-60">
-          <span ref={counterRef}>0</span>%
-        </span>
-      </div>
+      <span className="text-[clamp(4rem,14vw,11rem)] font-semibold leading-none tracking-[-0.05em] tabular-nums">
+        <span ref={counterRef}>0</span>
+        <span className="text-[0.4em] text-[#8b877b]">%</span>
+      </span>
+      <span className="serif-italic text-2xl text-[#9fe0b8]">Christimony</span>
     </div>
   );
 }
