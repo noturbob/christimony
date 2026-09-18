@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, serif;
-  --font-heading: var(--font-fraunces), ui-serif, serif;
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -37,34 +37,54 @@
 }
 
 /*
- * Single source of truth for the brand palette. There used to be two
- * competing :root blocks here (a default shadcn neutral oklch palette,
- * silently shadowed by this one) plus an unreachable, off-brand .dark
- * block -- both removed. Hover/active states are derived from these with
- * color-mix() rather than hand-picked hex values, so the palette only
- * needs to be edited in one place.
+ * Single source of truth for the brand palette: a "chalkboard" -- a
+ * forest-tinted near-black stage, brand cream as chalk, and one highlighter
+ * per part of the product. Colour is taxonomy, never decoration:
+ *   sage  = Christimony / the brand + primary action
+ *   gold  = browsing / intention
+ *   lilac = pace / connecting
+ *   blush = family
+ * Maroon only ever appears as a deep gradient stop. The shadcn semantic
+ * tokens below are mapped onto these, so app components pick the theme up
+ * without knowing about it.
  */
 :root {
-  --background: #faf6ef; /* warm cream */
-  --foreground: #1b1b18; /* near-black ink */
-  --card: #ffffff;
-  --card-foreground: #1b1b18;
-  --popover: #ffffff;
-  --popover-foreground: #1b1b18;
-  --primary: #24463b; /* deep forest green */
-  --primary-foreground: #faf6ef;
-  --secondary: #e2dacb; /* sand */
-  --secondary-foreground: #1b1b18;
-  --muted: #f1ece1;
-  --muted-foreground: #6b6459;
-  --accent: #7a2e2e; /* maroon */
-  --accent-foreground: #faf6ef;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: #e2dacb;
-  --input: #e2dacb;
-  --ring: #24463b;
-  --radius: 0.75rem;
+  color-scheme: dark;
+
+  --ink: #0f1311;
+  --ink-2: #161b18;
+  --ink-3: #1d2420;
+  --line: #2c332e;
+  --chalk: #faf6ef;
+  --chalk-50: #8b877b;
+  --sage: #9fe0b8;
+  --gold: #f2b95c;
+  --lilac: #b8a9ff;
+  --blush: #f1c7b7;
+  --forest: #24463b;
+  --maroon: #7a2e2e;
+  --grad-brand: linear-gradient(114deg, #3fbf86 15%, #c9f5a8 70%);
+
+  --background: var(--ink);
+  --foreground: var(--chalk);
+  --card: var(--ink-2);
+  --card-foreground: var(--chalk);
+  --popover: var(--ink-2);
+  --popover-foreground: var(--chalk);
+  --primary: var(--sage);
+  --primary-foreground: var(--ink);
+  --secondary: var(--ink-3);
+  --secondary-foreground: var(--chalk);
+  --muted: var(--ink-3);
+  --muted-foreground: var(--chalk-50);
+  --accent: var(--gold);
+  --accent-foreground: var(--ink);
+  --destructive: #f0806f;
+  --destructive-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--sage);
+  --radius: 0.5rem;
 
   /* Motion vocabulary shared by `motion` (in-app) and GSAP (marketing) so
    * every animation in the product comes from the same handful of
@@ -97,7 +117,7 @@
    * though -- only `html` and `body`'s own boxes do, and `html` had no
    * background of its own, so the browser's canvas (white) showed through
    * at the very top/bottom and during overscroll, breaking the illusion
-   * that the cream background is one continuous surface. Both elements
+   * that the page background is one continuous surface. Both elements
    * now carry the theme background and stretch to the full dynamic
    * viewport height, so there's no seam anywhere regardless of how tall a
    * given page's content is.
@@ -112,13 +132,11 @@
   }
 }
 
-.font-display {
-  font-family: var(--font-fraunces), serif;
-  font-optical-sizing: auto;
-}
+.font-display,
 .font-heading {
-  font-family: var(--font-fraunces), serif;
-  font-optical-sizing: auto;
+  font-family: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
 /* SplitText's mask:"lines" wraps each line in an overflow-hidden box sized
@@ -173,30 +191,9 @@
  * Maroon only ever appears as a deep gradient stop.
  * ------------------------------------------------------------------ */
 .landing {
-  --ink: #0f1311;
-  --ink-2: #161b18;
-  --line: #2c332e;
-  --chalk: #faf6ef;
-  --chalk-50: #8b877b;
-  --sage: #9fe0b8;
-  --gold: #f2b95c;
-  --lilac: #b8a9ff;
-  --blush: #f1c7b7;
-  --forest: #24463b;
-  --maroon: #7a2e2e;
-  --grad-brand: linear-gradient(114deg, #3fbf86 15%, #c9f5a8 70%);
-
-  font-family: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
   font-optical-sizing: auto;
-  background: var(--ink);
-  color: var(--chalk);
 }
-/* Paint the safe-area strips and overscroll the same ink as the page. */
-html:has(.landing),
-html:has(.landing) body {
-  background: #0f1311;
-}
-.landing ::selection {
+::selection {
   background: var(--sage);
   color: var(--ink);
 }

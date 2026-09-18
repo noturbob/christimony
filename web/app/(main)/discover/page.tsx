@@ -206,7 +206,7 @@ export default function DiscoverPage() {
         <div className="relative h-[70vh] min-h-[460px] max-h-[640px]">
           {next && (
             <div className="absolute inset-0 scale-[0.96] translate-y-2">
-              <div className="h-full rounded-3xl border border-border bg-card shadow-sm opacity-70 overflow-hidden">
+              <div className="h-full rounded-3xl border border-border bg-card opacity-60 overflow-hidden">
                 <ProfileCardBody profile={next} />
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function DiscoverPage() {
               key={current.id}
               onSwiped={(direction) => (direction === "like" ? performLike() : performPass())}
               disabled={acting}
-              className="absolute inset-0 rounded-3xl border border-border bg-card shadow-sm cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 rounded-3xl border border-border bg-card cursor-grab active:cursor-grabbing"
             >
               <ProfileCardBody profile={current} />
             </SwipeCard>
@@ -240,14 +240,14 @@ export default function DiscoverPage() {
           <button
             onClick={performPass}
             disabled={acting}
-            className="h-16 w-16 rounded-full border border-border bg-card flex items-center justify-center hover:bg-secondary transition-colors"
+            className="h-16 w-16 rounded-full border border-foreground/40 flex items-center justify-center transition-[border-color,transform] hover:border-foreground hover:scale-105 active:scale-95"
           >
             <X size={26} className="text-muted-foreground" />
           </button>
           <button
             onClick={performLike}
             disabled={acting}
-            className="h-16 w-16 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
+            className="h-16 w-16 rounded-full bg-[image:var(--grad-brand)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
           >
             <Heart size={26} className="text-primary-foreground" fill="currentColor" />
           </button>
@@ -258,22 +258,24 @@ export default function DiscoverPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-30 bg-primary text-primary-foreground flex flex-col items-center justify-center px-8 text-center gap-6"
+          className="fixed inset-0 z-30 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center px-8 text-center gap-6"
         >
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
           >
-            <Heart size={56} fill="currentColor" />
+            <Heart size={56} fill="currentColor" className="text-primary" />
           </motion.div>
-          <h2 className="font-display text-4xl">It&apos;s a match!</h2>
-          <p className="opacity-80">You and {matchOverlay.name} liked each other.</p>
+          <h2 className="font-display text-6xl leading-none">
+            It&apos;s a <em className="serif-italic text-primary">match.</em>
+          </h2>
+          <p className="text-muted-foreground">You and {matchOverlay.name} liked each other.</p>
           <div className="flex flex-col gap-3 w-full max-w-xs mt-4">
             <Link href="/matches" onClick={closeOverlay}>
-              <Button size="lg" variant="secondary" className="rounded-full w-full">See your matches</Button>
+              <Button size="lg" className="w-full">See your matches</Button>
             </Link>
-            <button onClick={closeOverlay} className="text-sm opacity-70 underline underline-offset-4">
+            <button onClick={closeOverlay} className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
               Keep browsing
             </button>
           </div>

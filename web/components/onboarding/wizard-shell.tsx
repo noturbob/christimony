@@ -30,7 +30,7 @@ export function WizardShell({
           )}
           <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
             <motion.div
-              className="h-full bg-primary rounded-full"
+              className="h-full bg-[image:var(--grad-brand)] rounded-full"
               initial={false}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4, ease: "easeOut" }}

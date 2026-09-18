@@ -90,7 +90,7 @@ export function HeroSection() {
           aria-hidden
           className="hero-intro serif-italic text-gradient-warm mt-[0.1em] block text-[0.36em] leading-[1.1] [animation-delay:900ms]"
         >
-          — not swiped past.
+          Not swiped past.
         </span>
       </h1>
 

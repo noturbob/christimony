@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", weight: ["400", "500", "600"] });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+// Bricolage carries everything; Fraunces italic is only for emphasis
+// (`.serif-italic`).
+const grotesk = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-grotesk", axes: ["opsz"] });
+const frauncesItalic = Fraunces({ subsets: ["latin"], variable: "--font-fraunces-italic", style: "italic", weight: "400" });
 
 export const metadata: Metadata = {
   title: "Christimony",
@@ -15,7 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#faf6ef",
+  themeColor: "#0f1311",
 };
 
 // Deliberately reads no request-time API (no cookies/headers) so the
@@ -24,7 +26,7 @@ export const viewport: Viewport = {
 // the only part of the tree that actually requires a session.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" className={`${grotesk.variable} ${frauncesItalic.variable}`} data-scroll-behavior="smooth">
       <body>
         <AuthProvider>{children}</AuthProvider>
       </body>

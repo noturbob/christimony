@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthAside } from "@/components/auth-aside";
 import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/oauth-buttons";
@@ -40,15 +41,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-dvh grid lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col justify-between bg-primary text-primary-foreground p-12">
-        <span className="font-display text-2xl">Christimony</span>
-        <div>
-          <p className="font-display text-6xl leading-tight max-w-md">
-            Every family plays a part in a marriage that lasts.
-          </p>
-        </div>
-        <p className="text-sm opacity-70">For Christians building a life together.</p>
-      </div>
+      <AuthAside>Every family plays a part in a marriage that <em className="serif-italic text-[var(--blush)]">lasts.</em></AuthAside>
 
       <div className="flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-8">
@@ -57,7 +50,7 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <h1 className="font-display text-3xl">Create an account</h1>
+            <h1 className="font-display text-5xl leading-none">Create an account</h1>
             <p className="text-muted-foreground mt-1">Start your search, or help guide someone else&apos;s.</p>
           </div>
 
