@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthAside } from "@/components/auth-aside";
+import { Wordmark } from "@/components/marketing/shared";
 import { startPhoneAuth } from "@/lib/phone-auth";
 import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/oauth-buttons";
@@ -46,7 +47,7 @@ export default function SignupPage() {
       <div className="flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-8">
           <div className="lg:hidden">
-            <span className="font-display text-2xl text-primary">Christimony</span>
+            <Wordmark testId="auth-mobile-wordmark" />
           </div>
 
           <div>
