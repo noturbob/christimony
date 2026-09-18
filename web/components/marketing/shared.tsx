@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { LogoMark } from "@/components/logo";
 import { useGSAP } from "@gsap/react";
 import { cancelIdle, ensureGsapRegistered, gsap, scheduleIdle, SplitText } from "@/lib/gsap";
 
@@ -188,11 +189,9 @@ export function Wordmark({ testId }: { testId: string }) {
     <Link
       data-testid={testId}
       href="/"
-      className="flex items-center gap-2.5 text-[19px] font-semibold tracking-[-0.03em] text-[var(--chalk)]"
+      className="flex items-center gap-2 text-[19px] font-semibold tracking-[-0.03em] text-[var(--chalk)]"
     >
-      <span className="grid size-8 place-items-center rounded-full bg-[image:var(--grad-brand)] font-display text-[16px] leading-none text-[var(--ink)]">
-        C
-      </span>
+      <LogoMark className="size-8" />
       Christimony
     </Link>
   );
