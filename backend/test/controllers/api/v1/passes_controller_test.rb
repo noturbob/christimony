@@ -20,6 +20,24 @@ class Api::V1::PassesControllerTest < ActionDispatch::IntegrationTest
     assert_includes feed_ids, @other_profile.id
   end
 
+  test "passing on a whole page doesn't skip profiles on the next one" do
+    others = (3..5).map { |n| account_with_profile("987658800#{n}", "Other #{n}").last }
+    expected = [ @other_profile, *others ].map(&:id).sort
+
+    get "/api/v1/profiles/feed", params: { per: 2 }, headers: auth(@me)
+    page1 = JSON.parse(response.body)
+    page1["profiles"].each do |p|
+      post "/api/v1/passes", params: { profile_id: @my_profile.id, passed_profile_id: p["id"] },
+        headers: auth(@me), as: :json
+    end
+
+    get "/api/v1/profiles/feed", params: { per: 2, after_id: page1["next_after_id"] }, headers: auth(@me)
+    page2_ids = JSON.parse(response.body)["profiles"].map { |p| p["id"] }
+
+    assert_equal expected.first(2), page1["profiles"].map { |p| p["id"] }
+    assert_equal expected.last(2), page2_ids
+  end
+
   test "passing twice is idempotent" do
     2.times do
       post "/api/v1/passes", params: { profile_id: @my_profile.id, passed_profile_id: @other_profile.id },

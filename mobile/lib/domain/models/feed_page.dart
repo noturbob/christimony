@@ -5,17 +5,15 @@ import 'profile.dart';
 part 'feed_page.freezed.dart';
 part 'feed_page.g.dart';
 
-/// The ONLY endpoint that paginates. See `docs/mobile-v1-plan.md` §4.6.4:
-/// `already_interested_ids` is rebuilt per request and offset pagination
-/// applied on top, so every like shrinks the result set and page 2
-/// silently skips as many profiles as were liked on page 1. The deck
-/// controller's `seenIds` dedupe (see `DeckController`) stops duplicate
-/// *cards* but cannot recover profiles skipped this way.
+/// The ONLY endpoint that paginates. Keyset: pass `nextAfterId` back as
+/// `after_id` (via `FeedFilters.afterId`). Likes and passes remove profiles
+/// from the result set between requests, which is why this isn't an
+/// offset -- an offset would skip that many unseen profiles.
 @freezed
 abstract class FeedPage with _$FeedPage {
   const factory FeedPage({
     required List<Profile> profiles,
-    @JsonKey(name: 'next_page') int? nextPage,
+    @JsonKey(name: 'next_after_id') int? nextAfterId,
   }) = _FeedPage;
 
   factory FeedPage.fromJson(Map<String, dynamic> json) =>
@@ -35,7 +33,7 @@ abstract class FeedFilters with _$FeedFilters {
     String? gender,
     @JsonKey(name: 'min_age') int? minAge,
     @JsonKey(name: 'max_age') int? maxAge,
-    @Default(1) int page,
+    @JsonKey(name: 'after_id') int? afterId,
   }) = _FeedFilters;
 
   factory FeedFilters.fromJson(Map<String, dynamic> json) =>
@@ -50,6 +48,6 @@ extension FeedFiltersQuery on FeedFilters {
     if (gender != null) 'gender': gender,
     if (minAge != null) 'min_age': minAge,
     if (maxAge != null) 'max_age': maxAge,
-    'page': page,
+    if (afterId != null) 'after_id': afterId,
   };
 }

@@ -61,13 +61,13 @@ export interface FeedFilters {
   gender?: string;
   min_age?: number;
   max_age?: number;
-  page?: number;
+  after_id?: number;
   per?: number;
 }
 
 export interface FeedPage {
   profiles: Profile[];
-  next_page: number | null;
+  next_after_id: number | null;
 }
 
 export function getMyProfiles() {

@@ -10,12 +10,12 @@ _FeedPage _$FeedPageFromJson(Map<String, dynamic> json) => _FeedPage(
   profiles: (json['profiles'] as List<dynamic>)
       .map((e) => Profile.fromJson(e as Map<String, dynamic>))
       .toList(),
-  nextPage: (json['next_page'] as num?)?.toInt(),
+  nextAfterId: (json['next_after_id'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$FeedPageToJson(_FeedPage instance) => <String, dynamic>{
   'profiles': instance.profiles,
-  'next_page': instance.nextPage,
+  'next_after_id': instance.nextAfterId,
 };
 
 _FeedFilters _$FeedFiltersFromJson(Map<String, dynamic> json) => _FeedFilters(
@@ -24,7 +24,7 @@ _FeedFilters _$FeedFiltersFromJson(Map<String, dynamic> json) => _FeedFilters(
   gender: json['gender'] as String?,
   minAge: (json['min_age'] as num?)?.toInt(),
   maxAge: (json['max_age'] as num?)?.toInt(),
-  page: (json['page'] as num?)?.toInt() ?? 1,
+  afterId: (json['after_id'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$FeedFiltersToJson(_FeedFilters instance) =>
@@ -34,5 +34,5 @@ Map<String, dynamic> _$FeedFiltersToJson(_FeedFilters instance) =>
       'gender': instance.gender,
       'min_age': instance.minAge,
       'max_age': instance.maxAge,
-      'page': instance.page,
+      'after_id': instance.afterId,
     };

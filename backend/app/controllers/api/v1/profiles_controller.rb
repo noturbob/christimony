@@ -30,16 +30,18 @@ module Api
 
         per = params[:per].present? ? [ params[:per].to_i, MAX_PER_PAGE ].min : MAX_PER_PAGE
         per = MAX_PER_PAGE if per < 1
-        page = [ params[:page].to_i, 1 ].max
+        # Keyset, not offset: likes and passes remove profiles from this
+        # result set between requests, so an offset would skip that many
+        # unseen profiles on the next page.
+        profiles = profiles.where("profiles.id > ?", params[:after_id].to_i) if params[:after_id].present?
 
-        profiles = profiles.order(:id).offset((page - 1) * per).limit(per + 1)
-        results = profiles.to_a
+        results = profiles.order(:id).limit(per + 1).to_a
         has_more = results.size > per
         results = results.first(per)
 
         render json: {
           profiles: results.map { |p| profile_json(p) },
-          next_page: has_more ? page + 1 : nil
+          next_after_id: has_more ? results.last.id : nil
         }
       end
 
