@@ -4,8 +4,8 @@ module Api
       include ProfileSerialization
 
       before_action :authenticate_account!
-      before_action :set_profile, only: [:show, :update]
-      before_action :authorize_access!, only: [:update]
+      before_action :set_profile, only: [ :show, :update ]
+      before_action :authorize_access!, only: [ :update ]
 
       MAX_PER_PAGE = 25
 
@@ -20,15 +20,16 @@ module Api
 
         profiles = Profile.discoverable
                            .where.not(id: my_profile_ids + already_interested_ids)
+                           .includes(:denomination, :profile_prompts, profile_photos: { image_attachment: :blob })
 
         profiles = profiles.where(city: params[:city]) if params[:city].present?
         profiles = profiles.where(denomination_id: params[:denomination_id]) if params[:denomination_id].present?
         profiles = profiles.where(gender: params[:gender]) if params[:gender].present?
         profiles = apply_age_filter(profiles)
 
-        per = params[:per].present? ? [params[:per].to_i, MAX_PER_PAGE].min : MAX_PER_PAGE
+        per = params[:per].present? ? [ params[:per].to_i, MAX_PER_PAGE ].min : MAX_PER_PAGE
         per = MAX_PER_PAGE if per < 1
-        page = [params[:page].to_i, 1].max
+        page = [ params[:page].to_i, 1 ].max
 
         profiles = profiles.order(:id).offset((page - 1) * per).limit(per + 1)
         results = profiles.to_a

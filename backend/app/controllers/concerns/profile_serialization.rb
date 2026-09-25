@@ -72,10 +72,13 @@ module ProfileSerialization
     photo.url
   end
 
+  # No `.processed`: that ran image processing inline, up to 150 times on a
+  # cold feed page (25 profiles x 6 photos). The representation URL makes
+  # ActiveStorage generate the variant lazily on the first GET instead.
   def photo_thumb_url(photo)
     return nil unless photo.image.attached?
 
-    variant = photo.image.variant(resize_to_limit: [ 600, 750 ]).processed
+    variant = photo.image.variant(resize_to_limit: [ 600, 750 ])
     rails_representation_url(variant, host: request.base_url)
   rescue StandardError
     nil
