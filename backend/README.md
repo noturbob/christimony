@@ -144,6 +144,10 @@ Any controller can protect its actions with `before_action :authenticate_account
 - `POST /api/v1/interests` — send interest from a profile you have access to; auto-detects mutual interest and creates a `Match`; if both profiles are parent-owned, also auto-creates an `Introduction`
 - `GET /api/v1/matches` — list matches involving your profiles; each includes `my_profile_id` so the client doesn't have to work out which side is "me"
 
+### Passes
+- `POST /api/v1/passes` — body `{ "profile_id": <acting profile>, "passed_profile_id": <id> }`. A left-swipe; the passed profile is excluded from your feed from then on. Idempotent, and private to the passer (deliberately not an `Interest` status, which the other side can see).
+- `DELETE /api/v1/passes/:id` — undo
+
 ### Introductions
 - `GET /api/v1/introductions`
 - `POST /api/v1/introductions/:id/accept` — body: `{ "ward_profile_id": <id> }`

@@ -17,9 +17,10 @@ module Api
       def feed
         my_profile_ids = current_account.profiles.pluck(:id)
         already_interested_ids = Interest.where(sender_profile_id: my_profile_ids).pluck(:receiver_profile_id)
+        passed_ids = ProfilePass.where(profile_id: my_profile_ids).pluck(:passed_profile_id)
 
         profiles = Profile.discoverable
-                           .where.not(id: my_profile_ids + already_interested_ids)
+                           .where.not(id: my_profile_ids + already_interested_ids + passed_ids)
                            .includes(:denomination, :profile_prompts, profile_photos: { image_attachment: :blob })
 
         profiles = profiles.where(city: params[:city]) if params[:city].present?

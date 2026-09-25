@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_12_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -142,6 +142,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_12_000002) do
     t.index ["profile_id"], name: "index_profile_accesses_on_profile_id"
   end
 
+  create_table "profile_passes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "passed_profile_id", null: false
+    t.bigint "profile_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["passed_profile_id"], name: "index_profile_passes_on_passed_profile_id"
+    t.index ["profile_id", "passed_profile_id"], name: "index_profile_passes_on_profile_id_and_passed_profile_id", unique: true
+    t.index ["profile_id"], name: "index_profile_passes_on_profile_id"
+  end
+
   create_table "profile_photos", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "position", default: 0, null: false
@@ -226,6 +236,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_12_000002) do
   add_foreign_key "messages", "conversations"
   add_foreign_key "profile_accesses", "accounts"
   add_foreign_key "profile_accesses", "profiles"
+  add_foreign_key "profile_passes", "profiles"
+  add_foreign_key "profile_passes", "profiles", column: "passed_profile_id"
   add_foreign_key "profile_photos", "profiles"
   add_foreign_key "profile_prompts", "profiles"
   add_foreign_key "profiles", "denominations"

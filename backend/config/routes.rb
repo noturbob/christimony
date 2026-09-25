@@ -12,35 +12,36 @@ Rails.application.routes.draw do
       get "denominations", to: "denominations#index"
       get "prompt_questions", to: "prompt_questions#index"
 
-      resources :profiles, only: [:index, :show, :create, :update] do
+      resources :profiles, only: [ :index, :show, :create, :update ] do
         collection do
           get :feed
         end
-        resources :vouches, only: [:index, :create]
-        resources :prompts, controller: "profile_prompts", only: [:index, :create, :update, :destroy]
-        resources :photos, controller: "profile_photos", only: [:create, :destroy] do
+        resources :vouches, only: [ :index, :create ]
+        resources :prompts, controller: "profile_prompts", only: [ :index, :create, :update, :destroy ]
+        resources :photos, controller: "profile_photos", only: [ :create, :destroy ] do
           collection do
             patch :reorder
           end
         end
       end
 
-      resources :interests, only: [:index, :create]
-      resources :matches, only: [:index]
+      resources :interests, only: [ :index, :create ]
+      resources :passes, only: [ :create, :destroy ]
+      resources :matches, only: [ :index ]
 
-      resources :introductions, only: [:index] do
+      resources :introductions, only: [ :index ] do
         member do
           post :accept
           post :decline
         end
       end
 
-      resources :conversations, only: [:index, :create] do
-        resources :messages, only: [:index, :create]
+      resources :conversations, only: [ :index, :create ] do
+        resources :messages, only: [ :index, :create ]
       end
 
-      resources :verifications, only: [:index, :create]
-      resources :subscriptions, only: [:index, :create]
+      resources :verifications, only: [ :index, :create ]
+      resources :subscriptions, only: [ :index, :create ]
     end
   end
 end
