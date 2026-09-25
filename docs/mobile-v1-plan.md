@@ -83,6 +83,12 @@ mobile/
 
 ## 3. Design system
 
+> **Superseded (2026-09-25):** the web moved to a dark-only "chalkboard"
+> theme (Bricolage Grotesque, sage/gold/lilac/blush highlighters, a
+> gradient-hairline primary button). The app now matches it and is
+> dark-only too — `mobile/lib/core/theme/tokens.dart` is the source of
+> truth. The token tables below describe the earlier cream/forest palette.
+
 Port the web's tokens exactly from `web/app/globals.css`. There is no dark palette there (the
 `.dark` block was deliberately deleted in `a4f061c`), so the dark column is authored — derived by
 mining the marketing page's dark sections, which already use `#E6B9A9` / `#F1C7B7` / `#EAD8CB` as

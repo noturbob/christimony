@@ -19,21 +19,20 @@ real and tested:
   box), so local testing needs a physical device over `adb`.
 - ✅ Project scaffold: `app.christimony` bundle id on both platforms,
   feature-first directory layout (`lib/core`, `lib/domain`, `lib/data`,
-  and eventually `lib/features`, `lib/ui`) matching the plan's §2 — the
-  latter two land once real screens/components exist, see Directory map
-  below.
+  `lib/ui`, and eventually `lib/features`) matching the plan's §2 — see
+  Directory map below.
 - ✅ Full dependency set resolved and pinned (`pubspec.lock`) — Riverpod 3,
   go_router, Dio, freezed/json_serializable, and the rest of the plan's
   §4.1 list.
-- ✅ Design tokens: `ChristimonyColors`/`ChristimonyRadii` as
-  `ThemeExtension`s (light + dark, plan §3.1), Fraunces/Inter typography
-  (bundled variable fonts, OFL-licensed), motion constants, and a
-  `buildLightTheme()`/`buildDarkTheme()` wired into `MaterialApp`. Theme
-  mode (System/Light/Dark) persists via `shared_preferences`.
+- ✅ Design tokens: the web's dark "chalkboard" palette and radii
+  (`AppColors`/`AppRadii`), Bricolage Grotesque + Fraunces italic
+  typography (bundled variable fonts, OFL-licensed), motion constants, and
+  one dark `buildTheme()`. Dark-only, like the web.
+- ✅ First components in `lib/ui/`: `CtaButton` (the gradient-hairline
+  primary action) and `LogoMark` (the new cross-and-ring mark).
 - ✅ Debug **Design Gallery** (`lib/dev/design_gallery.dart`) — the
-  current `home:` of the app. Renders every color token, the type scale,
-  radii, and first-pass buttons/cards, with a theme-mode toggle in the
-  app bar.
+  current `home:` of the app. Renders every colour token, the type scale,
+  radii, buttons, a card, and the match-celebration heading.
 - ✅ Core networking layer: the `ChristimonyApi` facade + `Endpoint`
   registry that makes the profiles/prompts request-envelope inconsistency
   unrepresentable (plan §4.2), a pure `mapError` covering all three (plus
@@ -145,16 +144,19 @@ including a captured HTML error page.
 
 ### Theming
 
-`lib/core/theme/tokens.dart` transcribes the design tokens 1:1 as a
-`ThemeExtension<ChristimonyColors>` — light values ported verbatim from
-`web/app/globals.css`; dark values authored fresh, since the web
-deliberately has no dark mode (`.dark` block removed in commit `a4f061c`).
-`lib/core/theme/theme.dart` derives a Material `ColorScheme` from those
-tokens so stock widgets (dialogs, `TextField`) render correctly without
-per-widget overrides. See `../docs/mobile-v1-plan.md` §3 for the full
-token table and rationale for every non-obvious choice (e.g. why the
-match-celebration overlay uses a separate `celebration` token rather than
-`primary` on dark).
+`lib/core/theme/tokens.dart` transcribes `web/app/globals.css`'s `:root`
+1:1 as plain constants — the dark "chalkboard" palette (forest-tinted
+near-black, cream "chalk" text, and one highlighter per part of the
+product: sage = brand/primary action, gold = browsing, lilac = pace,
+blush = family). The web is dark-only, so the app is too: one theme, no
+light/dark switch. `lib/core/theme/theme.dart` derives a Material
+`ColorScheme` from those tokens so stock widgets (dialogs, `TextField`)
+render on-brand without per-widget overrides.
+
+The primary action is `CtaButton`, never a filled block — same rule as
+the web's `.pill-cta`. When the web's tokens change, update `tokens.dart`
+to match; the older token table in `../docs/mobile-v1-plan.md` §3
+predates the chalkboard redesign.
 
 ## Directory map
 
@@ -164,6 +166,7 @@ lib/
   core/           theme, networking (Dio + interceptors + error mapping), storage, config
   domain/models/  freezed API response models
   data/           the ChristimonyApi facade + (future) per-resource repositories
+  ui/             shared components (CtaButton, LogoMark)
   dev/            debug-only tooling; currently the Design Gallery
 test/             mirrors lib/ -- unit tests for pure functions, HTTP-contract
                   tests for the envelope machinery, one widget test for the app shell
@@ -172,12 +175,10 @@ tool/
 ```
 
 `lib/features/` (one folder per screen area — auth, onboarding, discover, ...)
-and `lib/ui/` (the shared component kit, plan §3.5) don't exist yet — Git
-doesn't track empty directories, so pre-creating them as scaffolding
-doesn't actually reserve anything and it broke CI once already (see
-`tool/check_isolation.sh`'s `[ -d lib/features ]` guard). They'll appear
-for real once the first feature/component lands, per the plan's phase
-order.
+doesn't exist yet — Git doesn't track empty directories, so pre-creating it
+as scaffolding doesn't reserve anything and it broke CI once already (see
+`tool/check_isolation.sh`'s `[ -d lib/features ]` guard). It'll appear once
+the first screen lands.
 
 ## Verification
 

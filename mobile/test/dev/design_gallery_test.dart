@@ -1,60 +1,42 @@
 import 'package:christimony/app/app.dart';
-import 'package:christimony/core/theme/theme_mode_controller.dart';
+import 'package:christimony/ui/cta_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('ChristimonyApp renders the Design Gallery without error', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        child: const ChristimonyApp(),
-      ),
-    );
+  testWidgets('the Design Gallery builds end to end', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: ChristimonyApp()));
     await tester.pumpAndSettle();
 
     expect(find.text('Design Gallery'), findsOneWidget);
-    expect(find.text('Typography'), findsOneWidget);
-    expect(find.text('Colors'), findsOneWidget);
+    expect(find.text('Colours'), findsOneWidget);
 
-    // Scroll to the bottom to confirm the rest of the gallery -- including
-    // the match-celebration overlay preview -- builds without error too.
     await tester.dragUntilVisible(
-      find.text("It's a match!"),
+      find.text("It's a match.", findRichText: true),
       find.byType(ListView),
       const Offset(0, -300),
     );
-    expect(find.text("It's a match!"), findsOneWidget);
+    expect(find.text("It's a match.", findRichText: true), findsOneWidget);
   });
 
-  testWidgets('theme toggle button cycles through modes', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-
+  testWidgets('CtaButton fires when enabled and not when disabled', (
+    tester,
+  ) async {
+    var taps = 0;
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        child: const ChristimonyApp(),
+      MaterialApp(
+        home: Column(
+          children: [
+            CtaButton(label: 'Go', onPressed: () => taps++),
+            const CtaButton(label: 'Off', onPressed: null),
+          ],
+        ),
       ),
     );
-    await tester.pumpAndSettle();
 
-    // Defaults to system.
-    expect(find.byIcon(Icons.brightness_auto), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.brightness_auto));
-    await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.light_mode), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.light_mode));
-    await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+    await tester.tap(find.text('Go'));
+    await tester.tap(find.text('Off'));
+    expect(taps, 1);
   });
 }
