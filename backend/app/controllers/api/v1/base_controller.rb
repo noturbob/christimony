@@ -25,19 +25,19 @@ module Api
       private
 
       def current_account
-        @current_account ||= authenticate_account
+        @current_account ||= token_payload && Account.find_by(id: token_payload[:account_id])
       end
 
-      def authenticate_account
-        header = request.headers["Authorization"]
-        token = header.split(" ").last if header
-
-        decoded = JsonWebToken.decode(token)
-        Account.find_by(id: decoded[:account_id]) if decoded
+      def token_payload
+        @token_payload ||= JsonWebToken.decode(request.headers["Authorization"]&.split(" ")&.last)
       end
 
       def authenticate_account!
         render json: { error: "Unauthorized" }, status: :unauthorized unless current_account
+      end
+
+      def rate_limited
+        render json: { error: "Too many requests. Try again later." }, status: :too_many_requests
       end
     end
   end

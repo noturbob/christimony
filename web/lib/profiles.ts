@@ -104,6 +104,17 @@ export function sendInterest(senderProfileId: number, receiverProfileId: number)
   });
 }
 
+export function passProfile(profileId: number, passedProfileId: number) {
+  return apiFetch<{ id: number; profile_id: number; passed_profile_id: number }>("/passes", {
+    method: "POST",
+    body: { profile_id: profileId, passed_profile_id: passedProfileId },
+  });
+}
+
+export function undoPass(passId: number) {
+  return apiFetch<void>(`/passes/${passId}`, { method: "DELETE" });
+}
+
 export function createProfile(data: {
   name: string;
   profile_type: string;

@@ -42,6 +42,9 @@ None are required for local development — everything has a safe default (Postg
 | `APP_HOST`, `APP_PROTOCOL` | Host used to build absolute URLs (e.g. photo URLs) outside of a request context | — |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID — verifies the ID token's `aud` claim server-side (`app/services/oauth/google_verifier.rb`). Must match the frontend's `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (see `../web/README.md`) | — |
 | `APPLE_CLIENT_IDS` | Comma-separated list of accepted Apple audiences (`app/services/oauth/apple_verifier.rb`). Apple's `aud` claim differs per client surface: the web flow's Services ID (matching the frontend's `NEXT_PUBLIC_APPLE_CLIENT_ID`) **and** each native app's bundle id (e.g. `app.christimony`) need to be listed — a single value can't satisfy both | — |
+| `FCM_PROJECT_ID`, `FCM_CREDENTIALS_JSON` | Firebase project id and the full service-account key JSON (one line) for FCM HTTP v1 push (`app/services/fcm.rb`). Push is a silent no-op if either is unset | — |
+| `SOLID_QUEUE_IN_PUMA` | Runs the Solid Queue worker inside Puma. Push notifications and photo purges are background jobs, so without this (or a separate `bin/jobs` process) they never run | — |
+| `MIN_SUPPORTED_BUILD` | Returned by `GET /config`; mobile builds below it are told to upgrade | `0` |
 | `RAILS_MASTER_KEY` | Required in production to decrypt `config/credentials.yml.enc` (the content of `config/master.key`, gitignored — never commit it) | — |
 
 ## Core Design Concept: Parent/Ward Accounts
@@ -50,7 +53,7 @@ The defining feature of this app: a parent can create and manage a profile on be
 
 ## Data Model
 
-15 core models:
+19 core models:
 
 | Model | Purpose |
 |---|---|
@@ -65,10 +68,14 @@ The defining feature of this app: a parent can create and manage a profile on be
 | `Match` | Created when two interests are mutual. Type: `direct` or `parent`. |
 | `Introduction` | Created when two `parent`-type matches occur; tracks each ward's independent acceptance before creating a real ward-to-ward `Match`. |
 | `Conversation` | Wraps a `Match` 1:1. |
-| `Message` | A chat message; validates the sender actually has access to a profile in the conversation, and is marked read when the recipient fetches the thread. |
+| `Message` | A chat message (≤ 2000 chars); validates the sender actually has access to a profile in the conversation. Marked read by `POST /conversations/:id/read`. |
 | `Verification` | Tracks verification attempts per account (phone/email OTP, government ID, selfie liveness, video KYC). Phone verification is created automatically on a successful OTP login. |
 | `Vouch` | A third-party trust signal (e.g. a pastor vouching for a profile) that a profile owner requests. Doesn't gate anything. |
 | `Subscription` | Freemium/premium billing plan. Enforces one active subscription per account. |
+| `Block` | An account hiding a profile; hides in both directions. |
+| `Report` | A user report of a profile, stored for review. |
+| `Device` | An FCM push token registered to an account. |
+| `RevokedToken` | A revoked JWT `jti`, kept until the token's own expiry. |
 
 ## Authentication
 
@@ -78,6 +85,12 @@ Token-based (JWT), not cookie/session-based, since this API serves clients direc
 - `POST /api/v1/auth/phone/verify` — body `{ "phone": "...", "code": "123456" }`. On success, finds or creates the account, marks the phone verified, and returns a token.
 - `POST /api/v1/auth/google` / `POST /api/v1/auth/apple` — body `{ "id_token": "..." }`, the provider's own signed ID token from the client-side sign-in SDK. Verified server-side against `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_IDS` (`app/services/oauth/`), then finds or creates the account by `(oauth_provider, oauth_uid)`. If the token's email isn't already claimed by another account, it's attached — but only opportunistically; a taken email never fails the sign-in. Google needs only one accepted audience since a native app passing `serverClientId: <web client id>` to `GoogleSignIn` produces a token whose `aud` is that same web client id; Apple needs the list (see `APPLE_CLIENT_IDS` above) because native `sign_in_with_apple` puts the app's bundle id in `aud` instead of the web Services ID.
 - `GET /api/v1/me` — protected; returns the current account.
+- `PATCH /api/v1/me` — body `{ "account_type": "individual" | "parent" }`; returns the `/me` shape.
+- `DELETE /api/v1/me` — deletes the account, every profile it owns and everything hanging off them (photos, prompts, vouches, interests, passes, matches, conversations, messages, introductions, blocks, devices). Co-pilot access to other people's profiles is removed; those profiles survive.
+- `POST /api/v1/auth/refresh` — returns `{ "token": "<new jwt>" }` and revokes the presented one.
+- `DELETE /api/v1/auth/session` — optional body `{ "device_token": "..." }`; revokes the current token and unregisters that push device.
+
+Every JWT carries a `jti`; revoked ones are stored in `revoked_tokens` until they'd have expired anyway (30 days) and are treated exactly like invalid tokens.
 
 The three sign-in endpoints (phone verify, Google, Apple) all return the **same** envelope:
 
@@ -115,19 +128,22 @@ Any controller can protect its actions with `before_action :authenticate_account
 
 ## API Endpoints
 
+### Config (unauthenticated)
+- `GET /api/v1/config` — `{ min_supported_build }`
+
 ### Denominations & prompts (unauthenticated)
 - `GET /api/v1/denominations` — `[{ id, name }]`
 - `GET /api/v1/prompt_questions` — `["A faith habit I'd love to build together…", ...]`
 
 ### Profiles
 - `GET /api/v1/profiles` — profiles the current account has access to
-- `GET /api/v1/profiles/feed` — paginated (`?page=&per=`, max 25/page), filterable by `?city=`, `?denomination_id=`, `?gender=`, `?min_age=`, `?max_age=`; excludes your own profiles and anyone you've already sent an interest to. Returns `{ profiles: [...], next_page: number | null }`.
-- `GET /api/v1/profiles/:id` — view a profile (includes `photos` and `prompts`)
+- `GET /api/v1/profiles/feed` — keyset-paginated (`?after_id=&per=`, max 25/page), filterable by `?city=`, `?denomination_id=`, `?gender=`, `?min_age=`, `?max_age=`; excludes your own profiles, anyone you've sent an interest to or passed on, and anyone hidden by a block. Returns `{ profiles: [...], next_after_id: number | null }`.
+- `GET /api/v1/profiles/:id` — view a profile (includes `photos` and `prompts`). 404 unless it's `active` or you manage it, and it isn't hidden by a block (same rule for its `prompts` and `vouches` lists)
 - `POST /api/v1/profiles` — always created as `status: "draft"` regardless of what's sent; the owning account gets `ProfileAccess(role: "owner")` automatically
 - `PATCH /api/v1/profiles/:id` — requires `ProfileAccess`; this is how a profile is activated (`{ "profile": { "status": "active" } }`)
 
 ### Photos
-- `POST /api/v1/profiles/:profile_id/photos` — multipart, field `image`; requires `ProfileAccess`
+- `POST /api/v1/profiles/:profile_id/photos` — multipart, field `image` (JPEG/PNG/WebP/HEIC, ≤ 10 MB); requires `ProfileAccess`
 - `DELETE /api/v1/profiles/:profile_id/photos/:id`
 - `PATCH /api/v1/profiles/:profile_id/photos/reorder` — body `{ "order": [photo_id, photo_id, ...] }`, must include every photo id exactly once
 
@@ -158,8 +174,23 @@ Any controller can protect its actions with `before_action :authenticate_account
 ### Conversations & Messages
 - `GET /api/v1/conversations` — includes `unread_count` per conversation
 - `POST /api/v1/conversations` — body: `{ "match_id": <id> }`
-- `GET /api/v1/conversations/:conversation_id/messages` — requires the requester to be a participant; marks unread messages as read as a side effect
-- `POST /api/v1/conversations/:conversation_id/messages` — body: `{ "body": "..." }`
+- `POST /api/v1/conversations/:id/read` — marks every unread message from the other side as read
+- `GET /api/v1/conversations/:conversation_id/messages?before_id=&limit=` — requires the requester to be a participant; the newest `limit` (default 30, max 100) messages older than `before_id`, oldest first. No read side effect
+- `POST /api/v1/conversations/:conversation_id/messages` — body: `{ "body": "..." }` (≤ 2000 chars); 403 across a block
+
+### Blocks & reports
+- `GET /api/v1/blocks` — `[{ id, blocked_profile, created_at }]`
+- `POST /api/v1/blocks` — body `{ "blocked_profile_id": <id> }`; idempotent; 422 for a profile you manage
+- `DELETE /api/v1/blocks/:id`
+- A block is account → profile and hides in both directions: from the feed, profile pages, matches and conversations, and refuses interests/messages (403)
+- `POST /api/v1/reports` — body `{ "reported_profile_id", "reason": "spam" | "inappropriate" | "fake_profile" | "harassment" | "underage" | "other", "details" }`; stored for review, doesn't block
+
+### Push & realtime
+- `POST /api/v1/devices` — body `{ "token": "<FCM token>", "platform": "android" | "ios" }`; upsert by token
+- New messages, matches and introductions are pushed via FCM (`PushNotificationJob`, no-op without `FCM_*`) and broadcast over ActionCable: connect to `/cable?token=<jwt>` and subscribe to `AccountChannel`
+
+### Rate limits (429)
+Phone start 10/hour and verify 20/10 min per IP; Google/Apple 20/10 min per IP; refresh 30/hour per IP; messages 60/min, interests 120/hour, reports 20/day per account.
 
 ### Verifications
 - `GET /api/v1/verifications`
@@ -171,7 +202,7 @@ Any controller can protect its actions with `before_action :authenticate_account
 
 ## Status
 
-- Automated test suite (`bin/rails test`) covers models plus the phone-auth, OAuth, and messages-authorization controllers — 70 tests, all passing; Brakeman reports zero warnings.
+- Automated test suite (`bin/rails test`) covers models, the auth, account, messaging, block/report, device, privacy and photo endpoints, ActionCable auth and broadcasts, the push job, and the `DELETE /me` cascade — 125 tests, all passing; Brakeman reports zero warnings.
 - Verified manually end-to-end via curl: the full phone OTP flow including rate-limit and lockout behavior, the photo upload → thumbnail-variant → reorder pipeline, feed pagination and filters, and both authorization fixes below.
 - Two access-control bugs fixed: `GET /conversations/:id/messages` used to return any conversation's messages to any authenticated account regardless of participation; `POST /profiles/:id/vouches` used to accept a vouch from any authenticated account for any profile. Both now check `ProfileAccess`/participation.
 - Base controller now `rescue_from`s `ActionController::ParameterMissing`, `ActiveRecord::RecordInvalid`, and `ActiveRecord::RecordNotFound` as clean JSON instead of Rails' default HTML error page (which includes a full stack trace in development). Note: `POST /profiles` happens to accept a body without the `{"profile": {...}}` wrapper too, because Rails' `wrap_parameters_by_default` (from `config.load_defaults 8.1`) synthesizes it — this is coincidental to that endpoint's inferred wrap key matching what the controller requires, not a documented guarantee, and doesn't hold for every nested-body endpoint (e.g. `POST /profiles/:id/prompts` still requires the `{"prompt": {...}}` wrapper explicitly). Don't rely on it from a client.
@@ -180,5 +211,4 @@ Any controller can protect its actions with `before_action :authenticate_account
 
 - Real payment gateway integration for subscriptions (Razorpay planned)
 - Real KYC vendor integration for verification (currently just tracks status)
-- ActionCable real-time delivery for messages (currently the frontend polls; Solid Cable is configured and ready for this)
 - The Rails API is not yet deployed anywhere — see the root README for current deployment status

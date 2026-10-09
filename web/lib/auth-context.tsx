@@ -54,8 +54,9 @@ export function AuthProvider({
     setAccount(nextAccount);
   }, []);
 
+  // The session route revokes the token with Rails before clearing the cookie.
   async function logout() {
-    await fetch("/api/auth/session", { method: "DELETE" });
+    await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
     setAccount(null);
   }
 
@@ -64,6 +65,15 @@ export function AuthProvider({
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function updateAccountType(accountType: "individual" | "parent") {
+  return apiFetch<Account>("/me", { method: "PATCH", body: { account_type: accountType } });
+}
+
+/** Caller must still `logout()` afterwards to clear the session cookie. */
+export function deleteAccount() {
+  return apiFetch<void>("/me", { method: "DELETE" });
 }
 
 export function useAuth() {

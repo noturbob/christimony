@@ -4,6 +4,9 @@ module Api
       RATE_LIMIT_WINDOW = 1.hour
       RATE_LIMIT_MAX = 5
 
+      rate_limit to: 10, within: 1.hour, only: :start, name: "start", with: :rate_limited
+      rate_limit to: 20, within: 10.minutes, only: :verify, name: "verify", with: :rate_limited
+
       # POST /api/v1/auth/phone/start
       # Body: { phone }
       # Issues and sends a 6-digit OTP. Never reveals whether an account

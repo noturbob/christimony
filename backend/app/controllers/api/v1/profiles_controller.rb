@@ -20,7 +20,7 @@ module Api
         passed_ids = ProfilePass.where(profile_id: my_profile_ids).pluck(:passed_profile_id)
 
         profiles = Profile.discoverable
-                           .where.not(id: my_profile_ids + already_interested_ids + passed_ids)
+                           .where.not(id: my_profile_ids + already_interested_ids + passed_ids + current_account.hidden_profile_ids)
                            .includes(:denomination, :profile_prompts, profile_photos: { image_attachment: :blob })
 
         profiles = profiles.where(city: params[:city]) if params[:city].present?
@@ -97,6 +97,7 @@ module Api
 
       def set_profile
         @profile = Profile.find_by(id: params[:id])
+        @profile = nil if @profile && action_name == "show" && !current_account.can_view_profile?(@profile)
         render json: { error: "Profile not found" }, status: :not_found unless @profile
       end
 

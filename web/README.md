@@ -48,7 +48,7 @@ The matching Rails-side `GOOGLE_CLIENT_ID`/`APPLE_CLIENT_ID` (used to verify the
 The frontend does not hold a JWT in `localStorage` or any other place client JS can read. Instead:
 
 1. `lib/session.ts` defines an httpOnly, `SameSite=Lax` cookie (`christimony_session`) that holds the raw Rails JWT.
-2. `app/api/auth/session/route.ts` sets/clears that cookie — called right after a successful OTP verify or Google/Apple sign-in (`establishSession` in `lib/auth-context.tsx`, shared by both paths).
+2. `app/api/auth/session/route.ts` sets/clears that cookie — called right after a successful OTP verify or Google/Apple sign-in (`establishSession` in `lib/auth-context.tsx`, shared by both paths). On logout (and after account deletion) its `DELETE` first revokes the JWT with Rails (`DELETE /auth/session`, 3s timeout, best-effort) and then clears the cookie regardless, so an unreachable API never leaves anyone stuck signed in.
 3. `app/api/bff/[...path]/route.ts` is a proxy: every client-side API call goes to same-origin `/api/bff/*`, which attaches the cookie's token as `Authorization: Bearer <token>` and forwards to Rails. A `401` from Rails clears the cookie automatically. This is also why the browser never needs Rails' CORS configuration — it only ever talks to itself.
 4. `proxy.ts` (Next 16's renamed `middleware.ts`) redirects unauthenticated requests to app routes → `/login`, and authenticated requests to `/login`/`/verify`/`/signup` → `/discover`, entirely server-side (no client-side flash).
 5. `(main)/layout.tsx` and `onboarding/layout.tsx` fetch the account **once**, server-side (`lib/server-api.ts`, which calls Rails directly — no BFF hop needed since it already has the cookie), and hydrate it into `AuthContext` via `components/hydrate-auth.tsx`. Every page under those layouts can just call `useAuth()` and trust the account is there — no more per-page `loading` + `redirect-if-missing` boilerplate.
@@ -63,14 +63,14 @@ app/
   login/page.tsx               "/login"                phone number entry + Google/Apple buttons
   verify/page.tsx               "/verify"               6-digit OTP entry
   signup/page.tsx                "/signup"               same phone-first form as /login, signup-flavored copy
-  onboarding/[step]/page.tsx    "/onboarding/:step"     11-step profile-creation wizard
+  onboarding/[step]/page.tsx    "/onboarding/:step"     11-step wizard; saves account_type (PATCH /me), parents build their child's (ward) profile
   (main)/                                                the tabbed app shell (bottom nav), session-gated
-    discover/                   "/discover"             swipeable card stack
+    discover/                   "/discover"             swipeable card stack; passes persist (POST /passes, one-step undo), keyset-paged feed
     matches/                    "/matches"
-    messages/, messages/[id]/    "/messages", "/messages/:id"
+    messages/, messages/[id]/    "/messages", "/messages/:id"   thread: newest page + polling + "load earlier" (before_id), marks read explicitly
     introductions/               "/introductions"        parent/ward introduction flow
-    profile/                     "/profile"              account hub
-    profiles/new/, profiles/[id]/, profiles/[id]/edit/
+    profile/                     "/profile"              account hub: profiles, blocked list (unblock), log out, delete account
+    profiles/new/, profiles/[id]/, profiles/[id]/edit/   profiles/[id] has Report/Block; 404 = unavailable
     subscription/, verification/
   api/
     auth/session/route.ts        POST sets the session cookie, DELETE clears it
@@ -78,6 +78,14 @@ app/
 ```
 
 `app/login`, `app/signup`, and `app/verify` stay static (`○` in the build output) since they read no request-time API; everything under `(main)/` and `app/onboarding/` is dynamic (`ƒ`) since their layouts read the session cookie. `components/oauth-buttons.tsx` is the one client component both `/login` and `/signup` share for the Google/Apple flow: Google's own GSI script (`accounts.google.com/gsi/client`) renders its button into a ref div, Apple's popup flow (`appleid.auth.js`, `usePopup: true`) is triggered from a plain button — both post the resulting ID token to `POST /auth/google` or `/auth/apple` via `lib/oauth.ts`, then follow the same `establishSession` → onboarding-or-discover redirect as phone verify. Verify the static/dynamic split with `npm run build` after any auth-related change — the route table at the end of the build output is the source of truth.
+
+## Safety & account actions
+
+- **Report / Block** (`components/safety-actions.tsx`, used on `/profiles/:id` and the thread header): separate actions — a report (`POST /reports`, reason enum + optional details) doesn't block, but its success state offers Block. Blocking (`POST /blocks`) navigates away, since Rails then hides that profile/conversation everywhere. Unblock lives in the profile hub's "Blocked" list.
+- **Hidden profiles:** `GET /profiles/:id` 404s for paused, deleted, or blocked profiles; the page shows "isn't available" instead of erroring. A thread whose conversation no longer appears in `GET /conversations` is shown the same way.
+- **Delete account:** typed `DELETE` confirmation → `DELETE /me` → logout → `/`.
+- **Parents:** a parent-to-parent match only becomes an Introduction when both parents have a ward profile, so onboarding builds the child's profile for parent accounts, `/profiles/new` defaults to "My child", and the profile hub shows a callout while a parent has no ward profile.
+- Modals use `components/ui/dialog.tsx` (`Modal`, a styled base-ui `Dialog`).
 
 ## Design tokens
 

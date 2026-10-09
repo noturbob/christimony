@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { updateAccountType, useAuth } from "@/lib/auth-context";
 import {
   createProfile,
   updateProfile,
@@ -23,7 +23,7 @@ const REQUIRED_PROMPTS = 3;
 
 export default function OnboardingStepPage({ params }: { params: Promise<{ step: string }> }) {
   const { step } = use(params);
-  const { account } = useAuth();
+  const { account, hydrate } = useAuth();
   const router = useRouter();
 
   const [draft, setDraft] = useState<OnboardingDraft>(EMPTY_DRAFT);
@@ -81,6 +81,22 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
   async function goNext() {
     setError("");
 
+    if (step === "account-type") {
+      if (account?.account_type !== draft.accountType) {
+        setSubmitting(true);
+        try {
+          hydrate(await updateAccountType(draft.accountType));
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to save");
+          return;
+        } finally {
+          setSubmitting(false);
+        }
+      }
+      goTo(STEPS[index + 1]);
+      return;
+    }
+
     // The step right after basic-info collection creates the draft
     // profile server-side (it needs a profile_id before photos/prompts
     // can attach to anything).
@@ -89,7 +105,9 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
       try {
         const profile = await createProfile({
           name: draft.name,
-          profile_type: "self",
+          // A parent's wizard builds their child's (ward) profile -- the one
+          // a parent-to-parent match needs on both sides to become an Introduction.
+          profile_type: forChild ? "ward" : "self",
           gender: draft.gender,
           dob: draft.dob,
           city: draft.city,
@@ -183,6 +201,8 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
     }
   }
 
+  const forChild = draft.accountType === "parent";
+
   const canContinue = (() => {
     switch (step) {
       case "account-type":
@@ -217,7 +237,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
       <div className="flex-1 flex flex-col">
         <div className="flex-1 flex flex-col justify-center">
           {step === "account-type" && (
-            <StepFrame title="Who is this for?">
+            <StepFrame title="Who is this for?" subtitle="Parents: you'll build your child's profile next, so other families can be introduced to them.">
               <div className="space-y-3">
                 <OptionCard
                   label="Myself"
@@ -236,7 +256,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "name" && (
-            <StepFrame title="What's your name?">
+            <StepFrame title={forChild ? "What's your child's name?" : "What's your name?"}>
               <Input
                 autoFocus
                 value={draft.name}
@@ -248,7 +268,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "dob" && (
-            <StepFrame title="When were you born?">
+            <StepFrame title={forChild ? "When were they born?" : "When were you born?"}>
               <Input
                 type="date"
                 autoFocus
@@ -257,13 +277,13 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
                 className="h-14 text-lg rounded-2xl"
               />
               {draft.dob && !isAdult(draft.dob) && (
-                <p className="text-sm text-destructive mt-2">You must be 18 or older to join Christimony.</p>
+                <p className="text-sm text-destructive mt-2">{forChild ? "Your child" : "You"} must be 18 or older to join Christimony.</p>
               )}
             </StepFrame>
           )}
   
           {step === "gender" && (
-            <StepFrame title="I am...">
+            <StepFrame title={forChild ? "My child is..." : "I am..."}>
               <div className="space-y-3">
                 <OptionCard label="Male" selected={draft.gender === "male"} onClick={() => update("gender", "male")} />
                 <OptionCard label="Female" selected={draft.gender === "female"} onClick={() => update("gender", "female")} />
@@ -272,7 +292,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "denomination" && (
-            <StepFrame title="What's your denomination?" subtitle="Optional, but helps us match you well.">
+            <StepFrame title={forChild ? "Their denomination?" : "What's your denomination?"} subtitle="Optional, but helps us match well.">
               <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-1">
                 {denominations.map((d) => (
                   <OptionCard
@@ -291,7 +311,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "city" && (
-            <StepFrame title="Where are you based?">
+            <StepFrame title={forChild ? "Where are they based?" : "Where are you based?"}>
               <Input
                 autoFocus
                 value={draft.city}
@@ -322,7 +342,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "photos" && (
-            <StepFrame title="Add your photos" subtitle={`At least ${MIN_PHOTOS} photos help people take your profile seriously.`}>
+            <StepFrame title={forChild ? "Add their photos" : "Add your photos"} subtitle={`At least ${MIN_PHOTOS} photos help people take your profile seriously.`}>
               <label className="aspect-[4/5] w-full max-w-[220px] mx-auto rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 cursor-pointer text-muted-foreground">
                 <span className="text-3xl">{uploading ? "…" : "+"}</span>
                 <span className="text-sm">{uploading ? "Uploading..." : "Add a photo"}</span>
@@ -366,7 +386,10 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "bio" && (
-            <StepFrame title="Tell your story" subtitle="A few sentences about you and what you're looking for.">
+            <StepFrame
+              title={forChild ? "Tell their story" : "Tell your story"}
+              subtitle={forChild ? "A few sentences about your child and the family you hope they'll join." : "A few sentences about you and what you're looking for."}
+            >
               <Textarea
                 autoFocus
                 value={draft.bio}
@@ -379,7 +402,7 @@ export default function OnboardingStepPage({ params }: { params: Promise<{ step:
           )}
   
           {step === "review" && (
-            <StepFrame title="Ready to go" subtitle="Here's what people will see first.">
+            <StepFrame title="Ready to go" subtitle={forChild ? "Here's what other families will see first." : "Here's what people will see first."}>
               <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
                 <p className="font-display text-xl">{draft.name}</p>
                 <p className="text-sm text-muted-foreground">

@@ -83,6 +83,12 @@ deploy is.
      service's variables directly in the UI (`${{Postgres.PGHOST}}`
      etc.) instead of copy-pasting — use that if it's available, so a
      Postgres credential rotation doesn't silently break the app.
+   - `FCM_PROJECT_ID` / `FCM_CREDENTIALS_JSON`: Firebase project id and
+     the whole service-account key JSON on one line. Unset means no push
+     notifications (silently). Set `SOLID_QUEUE_IN_PUMA=true` too, or
+     the push jobs never run.
+   - `MIN_SUPPORTED_BUILD`: optional (default `0`); mobile builds below
+     it are told to upgrade via `GET /api/v1/config`.
    - Everything else: see the inline comments in
      `.env.production.example`, or `backend/README.md`'s own env var
      table for the same list in a different format.

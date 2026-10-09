@@ -2,6 +2,7 @@ module Api
   module V1
     class InterestsController < BaseController
       before_action :authenticate_account!
+      rate_limit to: 120, within: 1.hour, only: :create, by: -> { current_account.id }, with: :rate_limited
 
       def index
         my_profile_ids = current_account.profiles.pluck(:id)
@@ -21,6 +22,10 @@ module Api
 
         unless receiver_profile
           return render json: { error: "Receiver profile not found" }, status: :not_found
+        end
+
+        if current_account.hidden_profile_ids.include?(receiver_profile.id)
+          return render json: { error: "You can't send interest to this profile" }, status: :forbidden
         end
 
         interest = Interest.new(sender_profile: sender_profile, receiver_profile: receiver_profile, status: "pending")

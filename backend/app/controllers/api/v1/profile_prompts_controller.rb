@@ -5,8 +5,8 @@ module Api
 
       before_action :authenticate_account!
       before_action :set_profile
-      before_action :authorize_access!, only: [:create, :update, :destroy]
-      before_action :set_prompt, only: [:update, :destroy]
+      before_action :authorize_access!, only: [ :create, :update, :destroy ]
+      before_action :set_prompt, only: [ :update, :destroy ]
 
       def index
         render json: @profile.profile_prompts.map { |p| prompt_json(p) }
@@ -39,6 +39,7 @@ module Api
 
       def set_profile
         @profile = Profile.find_by(id: params[:profile_id])
+        @profile = nil if @profile && action_name == "index" && !current_account.can_view_profile?(@profile)
         render json: { error: "Profile not found" }, status: :not_found unless @profile
       end
 
