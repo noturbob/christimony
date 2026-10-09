@@ -37,6 +37,7 @@ None are required for local development — everything has a safe default (Postg
 | `CORS_ORIGINS` | Comma-separated list of allowed origins, in addition to any `*.vercel.app` subdomain (always allowed) | `http://localhost:3001` |
 | `SMS_PROVIDER` | `log` \| `twilio` \| `msg91` | `log` (prints the OTP to the Rails log; also returned as `dev_code` in the API response when `RAILS_ENV=development`) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | Required when `SMS_PROVIDER=twilio` | — |
+| `REVIEW_PHONE_NUMBERS`, `REVIEW_OTP_CODE` | Demo / App Store review login: these E.164 phones always accept the fixed 6-digit code and no SMS is sent. Off unless both are set | — |
 | `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID` | Required when `SMS_PROVIDER=msg91` (DLT-registered template for Indian transactional SMS) | — |
 | `S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_ENDPOINT` | Object storage for profile photos in production. `S3_ENDPOINT` is only needed for R2/non-AWS providers. Falls back to local disk if `S3_BUCKET` is unset | — |
 | `APP_HOST`, `APP_PROTOCOL` | Host used to build absolute URLs (e.g. photo URLs) outside of a request context | — |

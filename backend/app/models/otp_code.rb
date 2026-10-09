@@ -16,7 +16,7 @@ class OtpCode < ApplicationRecord
     def issue!(phone:, purpose: "login")
       active_for(phone, purpose).update_all(consumed_at: Time.current)
 
-      code = format("%06d", SecureRandom.random_number(1_000_000))
+      code = review_phone?(phone) ? ENV["REVIEW_OTP_CODE"] : format("%06d", SecureRandom.random_number(1_000_000))
       record = create!(
         phone: phone,
         code_digest: BCrypt::Password.create(code),
@@ -26,6 +26,14 @@ class OtpCode < ApplicationRecord
       )
 
       [ record, code ]
+    end
+
+    # App Store / Play review and demo logins: phones listed in
+    # REVIEW_PHONE_NUMBERS (E.164, comma-separated) always get REVIEW_OTP_CODE
+    # and no SMS is sent. Off unless both are set.
+    def review_phone?(phone)
+      ENV["REVIEW_OTP_CODE"].to_s.match?(/\A\d{6}\z/) &&
+        ENV["REVIEW_PHONE_NUMBERS"].to_s.split(",").map(&:strip).include?(phone)
     end
 
     def active_for(phone, purpose)
