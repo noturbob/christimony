@@ -43,7 +43,13 @@ abstract final class Api {
   static const googleAuth = Endpoint('POST', '/auth/google');
   static const appleAuth = Endpoint('POST', '/auth/apple');
 
+  static const refreshToken = Endpoint('POST', '/auth/refresh');
+  static const logout = Endpoint('DELETE', '/auth/session');
+
   static const me = Endpoint('GET', '/me');
+  static const updateMe = Endpoint('PATCH', '/me');
+  static const deleteMe = Endpoint('DELETE', '/me');
+  static const config = Endpoint('GET', '/config');
 
   // --- Reference data ---
   static const denominations = Endpoint('GET', '/denominations');
@@ -98,6 +104,19 @@ abstract final class Api {
   static const createInterest = Endpoint('POST', '/interests');
   static const listMatches = Endpoint('GET', '/matches');
 
+  // --- Passes (left swipe; flat body) ---
+  static const createPass = Endpoint('POST', '/passes');
+  static const deletePass = Endpoint('DELETE', '/passes/{id}');
+
+  // --- Safety (flat bodies) ---
+  static const listBlocks = Endpoint('GET', '/blocks');
+  static const createBlock = Endpoint('POST', '/blocks');
+  static const deleteBlock = Endpoint('DELETE', '/blocks/{id}');
+  static const createReport = Endpoint('POST', '/reports');
+
+  // --- Push ---
+  static const registerDevice = Endpoint('POST', '/devices');
+
   // --- Introductions (flat body) ---
   static const listIntroductions = Endpoint('GET', '/introductions');
   static const acceptIntroduction = Endpoint(
@@ -113,10 +132,10 @@ abstract final class Api {
   static const listConversations = Endpoint('GET', '/conversations');
   static const createConversation = Endpoint('POST', '/conversations');
 
-  /// NOTE: this endpoint has a server-side side effect — it marks every
-  /// unread message not sent by the caller as read. Only a foreground,
-  /// visible chat screen may call it. See `ChatController` and plan §4.6.
+  /// `?before_id=&limit=` (default 30). Has no read side effect --
+  /// a visible thread calls [markRead] explicitly.
   static const listMessages = Endpoint('GET', '/conversations/{cid}/messages');
+  static const markRead = Endpoint('POST', '/conversations/{cid}/read');
   static const createMessage = Endpoint(
     'POST',
     '/conversations/{cid}/messages',
@@ -136,5 +155,6 @@ abstract final class Api {
     phoneVerify,
     googleAuth,
     appleAuth,
+    config,
   };
 }

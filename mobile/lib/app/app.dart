@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/theme.dart';
-import '../dev/design_gallery.dart';
+import 'router/router.dart';
 
-/// Root widget. The full `go_router` + session-gated route table
-/// (`docs/mobile-v1-plan.md` §4.3) lands in a later pass -- for now this
-/// renders the Design Gallery.
-class ChristimonyApp extends StatelessWidget {
+class ChristimonyApp extends ConsumerWidget {
   const ChristimonyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'Christimony',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
-      home: const DesignGalleryScreen(),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

@@ -11,7 +11,6 @@ abstract final class AppConfig {
   static const cableUrl = String.fromEnvironment('CABLE_URL');
 
   static const cableEnabled = bool.fromEnvironment('CABLE_ENABLED');
-  static const refreshEnabled = bool.fromEnvironment('REFRESH_ENABLED');
 
   static const googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',

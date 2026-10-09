@@ -54,6 +54,26 @@ ThemeData buildTheme() {
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppColors.background,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: AppColors.primary.withValues(alpha: 0.14),
+      height: 64,
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.mutedForeground,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => textTheme.labelSmall?.copyWith(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.foreground
+              : AppColors.mutedForeground,
+        ),
+      ),
+    ),
     cardTheme: CardThemeData(
       color: AppColors.card,
       elevation: 0,

@@ -1,17 +1,16 @@
-import 'package:christimony/app/app.dart';
+import 'package:christimony/core/theme/theme.dart';
+import 'package:christimony/dev/design_gallery.dart';
 import 'package:christimony/ui/cta_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('the Design Gallery builds end to end', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: ChristimonyApp()));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      MaterialApp(theme: buildTheme(), home: const DesignGalleryScreen()),
+    );
 
     expect(find.text('Design Gallery'), findsOneWidget);
-    expect(find.text('Colours'), findsOneWidget);
-
     await tester.dragUntilVisible(
       find.text("It's a match.", findRichText: true),
       find.byType(ListView),

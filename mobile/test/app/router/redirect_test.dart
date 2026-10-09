@@ -1,5 +1,6 @@
 import 'package:christimony/app/router/redirect.dart';
 import 'package:christimony/app/router/routes.dart';
+import 'package:christimony/core/session/session.dart';
 import 'package:christimony/domain/models/account.dart';
 import 'package:christimony/domain/models/enums.dart';
 import 'package:flutter_test/flutter_test.dart';

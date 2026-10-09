@@ -8,13 +8,11 @@ import '../endpoints.dart';
 
 /// Attaches `Authorization: Bearer <token>` to every non-public request,
 /// and reacts to a normalized 401 by triggering force-logout exactly
-/// once per session.
+/// once per session. Tokens last 30 days and `SessionController` refreshes
+/// them proactively on launch, so a 401 here means revoked or expired.
 ///
-/// Extends [QueuedInterceptor] rather than plain [Interceptor] so error
-/// handling is serialized: once token-refresh lands (currently stubbed —
-/// see `AppConfig.refreshEnabled` and plan §4.2), ten concurrent 401s
-/// must produce exactly one refresh attempt, with the other nine awaiting
-/// it and retrying rather than each independently racing to refresh.
+/// [QueuedInterceptor] serializes error handling, so a burst of concurrent
+/// 401s triggers exactly one force-logout.
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor(this._holder);
 
