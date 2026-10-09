@@ -58,8 +58,7 @@ real and tested:
 What's **not** built yet — see the plan's phases 4–12: no screens for
 auth, onboarding, discover, matches, messages, introductions, or profile;
 no `go_router` route table wired to real screens (the Design Gallery is
-the only thing on screen); no ActionCable client; no push notifications;
-no app icon/splash. The backend-side Phase 1 work (deploying Rails,
+the only thing on screen); no ActionCable client. The backend-side Phase 1 work (deploying Rails,
 fixing the feed's N+1 and offset-pagination bug, adding `/passes`, the
 Apple OAuth audience-list fix, etc.) is also not started.
 
@@ -157,6 +156,43 @@ The primary action is `CtaButton`, never a filled block — same rule as
 the web's `.pill-cta`. When the web's tokens change, update `tokens.dart`
 to match; the older token table in `../docs/mobile-v1-plan.md` §3
 predates the chalkboard redesign.
+
+## Push notifications
+
+`lib/core/push/push_service.dart`, started from the app root. **Off until
+configured**: with any `FIREBASE_*` value in `config/<flavor>.json` empty,
+Firebase is never initialised and the app runs normally. There is no
+`google-services.json` / `GoogleService-Info.plist` and no Google Services
+Gradle plugin -- `Firebase.initializeApp(options:)` is fed from dart-defines.
+
+Once configured and signed in: a one-time in-app explanation precedes the
+OS permission prompt; the FCM token goes to `POST /devices` (again on
+refresh) and becomes `SessionController.deviceToken` so logout drops it.
+The Settings `push_enabled` pref (default on) is honoured -- after toggling
+it, call `ref.read(pushServiceProvider)?.sync()`. Foreground messages show
+as local notifications on Android (iOS uses FCM's foreground presentation).
+A tap routes by `data.type`: `message` -> the thread, `match` -> Matches,
+`introduction` -> Family.
+
+Setup (once): create a Firebase project; add Android apps
+`app.christimony`, `app.christimony.staging`, `app.christimony.dev` and iOS
+apps with the same bundle ids; copy each app's values into its flavor's
+`FIREBASE_API_KEY`, `FIREBASE_APP_ID_ANDROID`, `FIREBASE_APP_ID_IOS`,
+`FIREBASE_MESSAGING_SENDER_ID` (project number), `FIREBASE_PROJECT_ID`.
+iOS also needs an APNs auth key (.p8) uploaded under Project settings ->
+Cloud Messaging, and the Push Notifications capability + `remote-notification`
+background mode on the Runner target. Backend: `FCM_PROJECT_ID` +
+`FCM_CREDENTIALS_JSON` (a service-account key JSON).
+
+## App icon and splash
+
+Sources are in `assets/icon/`, rendered from `web/app/icon.svg` (full-bleed
+icon, adaptive-icon foreground on `#0f1311`, splash marks). The white
+`ic_notification` drawables are the notification small icon. After changing
+them: `dart run flutter_launcher_icons` and
+`dart run flutter_native_splash:create`, then commit the platform files
+(revert the launcher-icons tool's `project.pbxproj` edit -- it clobbers
+`ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS`).
 
 ## Directory map
 

@@ -96,3 +96,21 @@ flutter:
   # (the empty dir existed on disk) but broke CI (a fresh checkout has
   # no such directory), which flutter analyze treats as a warning ->
   # non-zero exit. Re-add once there's an actual asset in that folder.
+
+# `dart run flutter_launcher_icons` -- sources rendered from web/app/icon.svg.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0f1311"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+
+# `dart run flutter_native_splash:create`
+flutter_native_splash:
+  color: "#0f1311"
+  image: assets/icon/splash.png
+  android_12:
+    color: "#0f1311"
+    image: assets/icon/splash_android12.png
+  web: false
