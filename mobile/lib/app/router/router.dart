@@ -57,7 +57,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '${Routes.onboarding}/:step',
-        builder: (_, s) => OnboardingScreen(step: s.pathParameters['step']!),
+        // One page key for every step keeps the wizard mounted, so it
+        // animates between steps itself.
+        pageBuilder: (_, s) => MaterialPage(
+          key: const ValueKey('onboarding'),
+          child: OnboardingScreen(step: s.pathParameters['step']!),
+        ),
       ),
       GoRoute(
         path: '/profiles/:id',
