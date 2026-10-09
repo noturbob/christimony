@@ -14,7 +14,9 @@ export default function NewProfilePage() {
   const router = useRouter();
 
   const [name, setName] = useState("");
-  const [profileType, setProfileType] = useState("self");
+  // Parents default to a child's profile -- that's the one introductions need.
+  const [chosenType, setProfileType] = useState<string | null>(null);
+  const profileType = chosenType ?? (account?.account_type === "parent" ? "ward" : "self");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [error, setError] = useState("");

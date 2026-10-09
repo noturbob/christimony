@@ -23,5 +23,9 @@ module Backend
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Cable auth is a bearer token in the URL, not a cookie, and native
+    # mobile WebSocket clients send no Origin header at all.
+    config.action_cable.disable_request_forgery_protection = true
   end
 end

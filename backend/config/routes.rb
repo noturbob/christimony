@@ -7,7 +7,12 @@ Rails.application.routes.draw do
       post "auth/phone/verify", to: "phone_auth#verify"
       post "auth/google", to: "oauth#google"
       post "auth/apple", to: "oauth#apple"
+      post "auth/refresh", to: "sessions#refresh"
+      delete "auth/session", to: "sessions#destroy"
       get "me", to: "accounts#me"
+      patch "me", to: "accounts#update"
+      delete "me", to: "accounts#destroy"
+      get "config", to: "config#show"
 
       get "denominations", to: "denominations#index"
       get "prompt_questions", to: "prompt_questions#index"
@@ -37,8 +42,13 @@ Rails.application.routes.draw do
       end
 
       resources :conversations, only: [ :index, :create ] do
+        post :read, on: :member
         resources :messages, only: [ :index, :create ]
       end
+
+      resources :blocks, only: [ :index, :create, :destroy ]
+      resources :reports, only: [ :create ]
+      resources :devices, only: [ :create ]
 
       resources :verifications, only: [ :index, :create ]
       resources :subscriptions, only: [ :index, :create ]

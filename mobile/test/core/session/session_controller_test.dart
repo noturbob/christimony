@@ -137,7 +137,11 @@ void main() {
     expect(session.account.onboarding?.complete, isFalse);
     expect(store.token, 'tok');
 
-    adapter.onDelete('/auth/session', (s) => s.reply(204, null), data: <String, Object>{});
+    adapter.onDelete(
+      '/auth/session',
+      (s) => s.reply(204, null),
+      data: <String, Object>{},
+    );
     await controller.logout();
     expect(container.read(sessionProvider), isA<Unauthenticated>());
     expect(store.token, isNull);

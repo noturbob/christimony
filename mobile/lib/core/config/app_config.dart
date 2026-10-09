@@ -19,6 +19,19 @@ abstract final class AppConfig {
     'GOOGLE_IOS_CLIENT_ID',
   );
 
+  /// Firebase (push). All empty -> push stays off; see README "Push".
+  static const firebaseApiKey = String.fromEnvironment('FIREBASE_API_KEY');
+  static const firebaseAppIdAndroid = String.fromEnvironment(
+    'FIREBASE_APP_ID_ANDROID',
+  );
+  static const firebaseAppIdIos = String.fromEnvironment('FIREBASE_APP_ID_IOS');
+  static const firebaseMessagingSenderId = String.fromEnvironment(
+    'FIREBASE_MESSAGING_SENDER_ID',
+  );
+  static const firebaseProjectId = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+  );
+
   static const flavor = String.fromEnvironment('FLAVOR', defaultValue: 'dev');
 
   /// Fail loudly at startup rather than at the first request. Call this
