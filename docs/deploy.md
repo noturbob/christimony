@@ -1,10 +1,37 @@
 # Deploying the backend
 
-The Rails API (`backend/`) isn't deployed anywhere yet — this is the
-walkthrough for doing that. The app itself needs no changes to be
-deployable (a couple of small gaps found while writing this doc are
-already fixed on `main` — see "What was fixed to make this possible"
-below); what's left is entirely on the hosting side.
+## Current deployment (free tier): Render + Neon
+
+- **API:** Render web service `christimony-api` (free plan, Singapore),
+  <https://christimony-api.onrender.com>. Built from `backend/Dockerfile`
+  with root directory `backend`; every push to `main` redeploys it.
+- **Database:** Neon project `christimony` (free plan, `aws-ap-southeast-1`).
+  The API connects to the direct (non-pooled) endpoint; on first boot
+  `db:prepare` creates all four databases (`backend_production`, `_cache`,
+  `_queue`, `_cable`) — Neon's default role has `CREATEDB`.
+- **Web:** Vercel's `API_BASE_URL` points at
+  `https://christimony-api.onrender.com/api/v1` (Production + Preview).
+
+Render env vars, besides the ones in `backend/.env.production.example`:
+`HTTP_PORT=10000` (Thruster must listen where Render routes traffic) and
+`BACKEND_DATABASE_HOST/PORT/USERNAME/PASSWORD` from Neon's connection
+string. `REVIEW_PHONE_NUMBERS` / `REVIEW_OTP_CODE` give a working demo
+login until an SMS provider is configured.
+
+Free-tier trade-offs, and when to change them:
+- The API sleeps after 15 minutes without traffic; the next request takes
+  about a minute. Move to a paid Render instance (or Railway Hobby) before
+  real users.
+- `SOLID_QUEUE_IN_PUMA` is unset so the app fits in 512 MB. That disables
+  background jobs, which today only send push notifications — set it to
+  `true` (on a bigger instance) when FCM is configured.
+- **Uploaded photos don't persist** until object storage is configured:
+  the free instance's disk is wiped on every sleep and deploy. Set the
+  `S3_*` / `AWS_*` variables to a bucket (Backblaze B2 and Cloudflare R2
+  both have free tiers).
+
+The rest of this doc is the general walkthrough (written for Railway, but
+the env vars and gotchas apply to any host).
 
 **Who does what:** you create the hosting account, provision Postgres,
 and set the env vars. Nothing here requires code changes from this
