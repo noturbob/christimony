@@ -21,6 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # The Android build (Gradle + every plugin's native deps) outgrew the
+      # runner's free disk; these preinstalled toolchains are unused here.
+      - name: Free runner disk space
+        working-directory: .
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL && df -h /
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.4'
