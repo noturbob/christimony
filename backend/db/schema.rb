@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_09_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "blocks", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "blocked_profile_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "blocked_profile_id"], name: "index_blocks_on_account_id_and_blocked_profile_id", unique: true
+    t.index ["account_id"], name: "index_blocks_on_account_id"
+    t.index ["blocked_profile_id"], name: "index_blocks_on_blocked_profile_id"
+  end
+
   create_table "conversations", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "match_id", null: false
@@ -68,6 +78,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_denominations_on_name", unique: true
+  end
+
+  create_table "devices", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "platform", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_devices_on_account_id"
+    t.index ["token"], name: "index_devices_on_token", unique: true
   end
 
   create_table "interests", force: :cascade do |t|
@@ -188,6 +208,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
     t.index ["denomination_id"], name: "index_profiles_on_denomination_id"
   end
 
+  create_table "reports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "details"
+    t.string "reason", null: false
+    t.bigint "reported_profile_id", null: false
+    t.bigint "reporter_account_id"
+    t.datetime "updated_at", null: false
+    t.index ["reported_profile_id"], name: "index_reports_on_reported_profile_id"
+    t.index ["reporter_account_id"], name: "index_reports_on_reporter_account_id"
+  end
+
+  create_table "revoked_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "jti", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_revoked_tokens_on_expires_at"
+    t.index ["jti"], name: "index_revoked_tokens_on_jti", unique: true
+  end
+
   create_table "subscriptions", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
@@ -224,7 +264,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "blocks", "accounts"
+  add_foreign_key "blocks", "profiles", column: "blocked_profile_id"
   add_foreign_key "conversations", "matches"
+  add_foreign_key "devices", "accounts"
   add_foreign_key "interests", "profiles", column: "receiver_profile_id"
   add_foreign_key "interests", "profiles", column: "sender_profile_id"
   add_foreign_key "introductions", "matches", column: "parent_match_id"
@@ -241,6 +284,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_000001) do
   add_foreign_key "profile_photos", "profiles"
   add_foreign_key "profile_prompts", "profiles"
   add_foreign_key "profiles", "denominations"
+  add_foreign_key "reports", "accounts", column: "reporter_account_id"
+  add_foreign_key "reports", "profiles", column: "reported_profile_id"
   add_foreign_key "subscriptions", "accounts"
   add_foreign_key "verifications", "accounts"
   add_foreign_key "vouches", "profiles"

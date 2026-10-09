@@ -5,12 +5,15 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { X, Heart } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { getFeed, getMyProfiles, sendInterest, Profile } from "@/lib/profiles";
+import { getFeed, getMyProfiles, passProfile, sendInterest, undoPass, Profile } from "@/lib/profiles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { SkeletonCard } from "@/components/skeleton-card";
 import { SwipeCard } from "@/components/swipe-card";
+
+// Fetch the next page once this few unseen profiles remain.
+const PREFETCH_AT = 3;
 
 function ProfileCardBody({ profile }: { profile: Profile }) {
   return (
@@ -60,11 +63,15 @@ export default function DiscoverPage() {
   const [queue, setQueue] = useState<Profile[]>([]);
   const [index, setIndex] = useState(0);
   const [cityFilter, setCityFilter] = useState("");
+  const [appliedCity, setAppliedCity] = useState("");
+  const [nextAfterId, setNextAfterId] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [acting, setActing] = useState(false);
   const [matchOverlay, setMatchOverlay] = useState<Profile | null>(null);
-  const [canUndo, setCanUndo] = useState(false);
+  // The last pass, so it can be undone (one step only).
+  const [lastPass, setLastPass] = useState<{ id: number | null; index: number } | null>(null);
 
   useEffect(() => {
     if (!account) return;
@@ -79,7 +86,10 @@ export default function DiscoverPage() {
     try {
       const page = await getFeed(cityFilter ? { city: cityFilter } : undefined);
       setQueue(page.profiles);
+      setNextAfterId(page.next_after_id);
+      setAppliedCity(cityFilter);
       setIndex(0);
+      setLastPass(null);
     } finally {
       setLoadingFeed(false);
     }
@@ -91,13 +101,26 @@ export default function DiscoverPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
+  useEffect(() => {
+    if (loadingFeed || loadingMore || nextAfterId === null || queue.length - index > PREFETCH_AT) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-threshold: flag the in-flight page so this doesn't refire
+    setLoadingMore(true);
+    getFeed({ after_id: nextAfterId, ...(appliedCity ? { city: appliedCity } : {}) })
+      .then((page) => {
+        setQueue((q) => [...q, ...page.profiles]);
+        setNextAfterId(page.next_after_id);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }, [index, queue.length, nextAfterId, appliedCity, loadingFeed, loadingMore]);
+
   const current = queue[index];
   const next = queue[index + 1];
 
   async function performLike() {
     if (!activeProfileId || !current || acting) return;
     setActing(true);
-    setCanUndo(false);
+    setLastPass(null);
     try {
       const result = await sendInterest(activeProfileId, current.id);
       if (result.match) {
@@ -112,18 +135,23 @@ export default function DiscoverPage() {
     }
   }
 
+  // Persisted so passed profiles stop reappearing. Advances optimistically;
+  // only a pass is undoable (there's no endpoint to take back a like).
   function performPass() {
-    if (acting) return;
-    setIndex((i) => i + 1);
-    // Passing never calls the API (there's no "unlike" endpoint to undo a
-    // like against), so only a pass can be safely undone.
-    setCanUndo(true);
+    if (acting || !current || !activeProfileId) return;
+    const at = index;
+    setIndex(at + 1);
+    setLastPass({ id: null, index: at });
+    passProfile(activeProfileId, current.id)
+      .then((pass) => setLastPass((lp) => (lp?.index === at ? { id: pass.id, index: at } : lp)))
+      .catch(() => setLastPass((lp) => (lp?.index === at ? null : lp)));
   }
 
   function handleUndo() {
-    if (!canUndo || index === 0) return;
-    setIndex((i) => i - 1);
-    setCanUndo(false);
+    if (!lastPass?.id) return;
+    undoPass(lastPass.id).catch(() => {});
+    setIndex(lastPass.index);
+    setLastPass(null);
   }
 
   function closeOverlay() {
@@ -184,7 +212,7 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {loadingFeed ? (
+      {loadingFeed || (!current && loadingMore) ? (
         <SkeletonCard />
       ) : !current ? (
         <div className="text-center py-20 space-y-3">
@@ -226,7 +254,7 @@ export default function DiscoverPage() {
 
       {current && (
         <div className="flex items-center justify-center gap-4 py-8">
-          {canUndo && (
+          {lastPass?.id && (
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -238,6 +266,7 @@ export default function DiscoverPage() {
             </motion.button>
           )}
           <button
+            aria-label="Pass"
             onClick={performPass}
             disabled={acting}
             className="h-16 w-16 rounded-full border border-foreground/40 flex items-center justify-center transition-[border-color,transform] hover:border-foreground hover:scale-105 active:scale-95"
@@ -245,6 +274,7 @@ export default function DiscoverPage() {
             <X size={26} className="text-muted-foreground" />
           </button>
           <button
+            aria-label="Like"
             onClick={performLike}
             disabled={acting}
             className="h-16 w-16 rounded-full bg-[image:var(--grad-brand)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95"

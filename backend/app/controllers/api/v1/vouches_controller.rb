@@ -27,6 +27,7 @@ module Api
 
       def set_profile
         @profile = Profile.find_by(id: params[:profile_id])
+        @profile = nil if @profile && action_name == "index" && !current_account.can_view_profile?(@profile)
         render json: { error: "Profile not found" }, status: :not_found unless @profile
       end
 

@@ -7,6 +7,8 @@ class Introduction < ApplicationRecord
     in: %w[pending_both pending_a pending_b accepted declined]
   }
 
+  after_commit :notify, on: [ :create, :update ], if: -> { previously_new_record? || saved_change_to_status? }
+
   # Both accept! and decline! are idempotent no-ops once the introduction
   # is resolved (accepted or declined) -- a repeat call (client retry,
   # double-tap, stale UI) must never re-run the side effect. Before this
@@ -44,6 +46,14 @@ class Introduction < ApplicationRecord
   end
 
   private
+
+  def notify
+    ward_ids = [ ward_a_id, ward_b_id ]
+    AccountChannel.notify(ward_ids, type: "introduction", introduction_id: id, status: status)
+    return unless previously_new_record?
+
+    PushNotificationJob.perform_later(Account.managing(ward_ids).ids, "New introduction", nil, { type: "introduction", introduction_id: id })
+  end
 
   def resolved?
     status.in?(%w[accepted declined])

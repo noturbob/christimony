@@ -7,9 +7,12 @@ module Api
 
       def index
         my_profile_ids = current_account.profiles.pluck(:id)
+        hidden_ids = current_account.hidden_profile_ids
 
         matches = Match.where(profile_a_id: my_profile_ids)
                         .or(Match.where(profile_b_id: my_profile_ids))
+                        .where.not(profile_a_id: hidden_ids)
+                        .where.not(profile_b_id: hidden_ids)
 
         render json: matches.map { |m| match_json(m, my_profile_ids) }
       end

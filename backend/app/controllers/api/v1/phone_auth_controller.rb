@@ -4,6 +4,9 @@ module Api
       RATE_LIMIT_WINDOW = 1.hour
       RATE_LIMIT_MAX = 5
 
+      rate_limit to: 10, within: 1.hour, only: :start, name: "start", with: :rate_limited
+      rate_limit to: 20, within: 10.minutes, only: :verify, name: "verify", with: :rate_limited
+
       # POST /api/v1/auth/phone/start
       # Body: { phone }
       # Issues and sends a 6-digit OTP. Never reveals whether an account
@@ -21,7 +24,7 @@ module Api
         end
 
         _record, code = OtpCode.issue!(phone: phone, purpose: "login")
-        Sms::Adapter.current.deliver(to: phone, body: "Your Christimony verification code is #{code}. It expires in 5 minutes.")
+        Sms::Adapter.current.deliver(to: phone, body: "Your Christimony verification code is #{code}. It expires in 5 minutes.") unless OtpCode.review_phone?(phone)
 
         response = { sent: true, expires_in: OtpCode::EXPIRY.to_i, retry_after: OtpCode::RESEND_COOLDOWN.to_i }
         response[:dev_code] = code if Rails.env.development?

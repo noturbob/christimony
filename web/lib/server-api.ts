@@ -5,7 +5,7 @@ import { getSessionToken } from "./session";
 // (the (app) shell layout, for hydrating auth with no client-side
 // loading flash) to call Rails directly, skipping the extra same-origin
 // hop the browser-side BFF proxy needs.
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3000/api/v1";
+export const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3000/api/v1";
 
 export async function serverApiFetch<T>(path: string): Promise<T | null> {
   const token = await getSessionToken();
