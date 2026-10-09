@@ -202,6 +202,7 @@ class _DeleteAccountDialogState extends ConsumerState<DeleteAccountDialog> {
               autocorrect: false,
               enableSuggestions: false,
               enabled: !_busy,
+              decoration: const InputDecoration(hintText: deletePhrase),
               onChanged: (_) => setState(() {}),
             ),
             if (_error != null) ...[

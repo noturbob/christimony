@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -76,14 +75,8 @@ class _PhotoStripState extends ConsumerState<PhotoStrip> {
     if (file == null || !mounted) return;
     setState(() => _uploading = true);
     try {
-      final bytes = await FlutterImageCompress.compressWithFile(
-        file.path,
-        minWidth: 1600,
-        minHeight: 1600,
-        quality: 85,
-      );
+      final bytes = await photoBytes(file);
       if (!mounted) return;
-      if (bytes == null) return _snack("Couldn't read that photo.");
       if (bytes.length > _maxUploadBytes) {
         return _snack('That photo is too large (10 MB max).');
       }

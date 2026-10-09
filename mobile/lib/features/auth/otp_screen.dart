@@ -299,7 +299,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                   onChanged: _onChanged,
                   showCursor: false,
                   style: const TextStyle(color: Colors.transparent),
-                  decoration: const InputDecoration.collapsed(hintText: null),
+                  // Every border explicitly none: collapsed() only clears
+                  // `border`, so the theme's outline still drew a box
+                  // across the cells.
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                  ),
                 ),
               ),
             ),

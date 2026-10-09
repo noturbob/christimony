@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,6 +13,7 @@ import '../../core/network/error_text.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/utils/dates.dart';
+import '../../data/api/upload.dart';
 import '../../domain/models/photo.dart';
 import '../../ui/cta_button.dart';
 import '../../ui/states.dart';
@@ -403,15 +403,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _error = null;
     });
     try {
-      final jpeg =
-          await FlutterImageCompress.compressWithFile(
-            file.path,
-            minWidth: 1600,
-            minHeight: 1600,
-            quality: 85,
-          ) ??
-          await file.readAsBytes();
-      await _controller.addPhoto(jpeg);
+      await _controller.addPhoto(await photoBytes(file));
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = errorText(e));
     } finally {
