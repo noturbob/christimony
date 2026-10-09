@@ -27,8 +27,9 @@ Rails.application.configure do
   # before object storage is set up), so the app still boots.
   config.active_storage.service = ENV["S3_BUCKET"].present? ? :amazon : :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Railway/Render/Fly terminate TLS at their proxy. Without this, Rails sees
+  # plain HTTP and builds http:// photo URLs, which browsers block on https pages.
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # config.force_ssl = true

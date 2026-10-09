@@ -24,7 +24,7 @@ module Api
         end
 
         _record, code = OtpCode.issue!(phone: phone, purpose: "login")
-        Sms::Adapter.current.deliver(to: phone, body: "Your Christimony verification code is #{code}. It expires in 5 minutes.")
+        Sms::Adapter.current.deliver(to: phone, body: "Your Christimony verification code is #{code}. It expires in 5 minutes.") unless OtpCode.review_phone?(phone)
 
         response = { sent: true, expires_in: OtpCode::EXPIRY.to_i, retry_after: OtpCode::RESEND_COOLDOWN.to_i }
         response[:dev_code] = code if Rails.env.development?

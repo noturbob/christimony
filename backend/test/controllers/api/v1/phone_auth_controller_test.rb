@@ -23,6 +23,28 @@ class Api::V1::PhoneAuthControllerTest < ActionDispatch::IntegrationTest
     assert_equal "+919876522222", body["account"]["phone"]
   end
 
+  test "a review phone always gets REVIEW_OTP_CODE and no SMS; other phones don't" do
+    ENV["REVIEW_PHONE_NUMBERS"] = "+919000000001"
+    ENV["REVIEW_OTP_CODE"] = "424242"
+    sent = []
+    original = Sms::LogAdapter.instance_method(:deliver)
+    Sms::LogAdapter.define_method(:deliver) { |to:, body:| sent << to }
+
+    post "/api/v1/auth/phone/start", params: { phone: "9000000001" }, as: :json
+    post "/api/v1/auth/phone/verify", params: { phone: "9000000001", code: "424242" }, as: :json
+    assert_response :success
+    assert_empty sent
+
+    post "/api/v1/auth/phone/start", params: { phone: "9000000002" }, as: :json
+    post "/api/v1/auth/phone/verify", params: { phone: "9000000002", code: "424242" }, as: :json
+    assert_response :unprocessable_entity
+    assert_equal [ "+919000000002" ], sent
+  ensure
+    ENV.delete("REVIEW_PHONE_NUMBERS")
+    ENV.delete("REVIEW_OTP_CODE")
+    Sms::LogAdapter.define_method(:deliver, original)
+  end
+
   test "verify rejects an incorrect code" do
     OtpCode.issue!(phone: "+919876533333")
 
