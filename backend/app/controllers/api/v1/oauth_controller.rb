@@ -1,6 +1,8 @@
 module Api
   module V1
     class OauthController < BaseController
+      rate_limit to: 20, within: 10.minutes, with: :rate_limited
+
       # POST /api/v1/auth/google
       # POST /api/v1/auth/apple
       # Body: { id_token }

@@ -4,9 +4,25 @@ module Api
       before_action :authenticate_account!
 
       def me
+        render json: me_json
+      end
+
+      def update
+        current_account.update!(account_type: params.require(:account_type))
+        render json: me_json
+      end
+
+      def destroy
+        current_account.destroy!
+        head :no_content
+      end
+
+      private
+
+      def me_json
         active_profile = current_account.profiles.find_by(status: "active")
 
-        render json: {
+        {
           id: current_account.id,
           email: current_account.email,
           phone: current_account.phone,

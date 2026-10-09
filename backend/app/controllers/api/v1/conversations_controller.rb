@@ -7,10 +7,13 @@ module Api
 
       def index
         my_profile_ids = current_account.profiles.pluck(:id)
+        hidden_ids = current_account.hidden_profile_ids
 
         photos = { profile_photos: { image_attachment: :blob } }
         conversations = Conversation.joins(:match)
                                      .where("matches.profile_a_id IN (?) OR matches.profile_b_id IN (?)", my_profile_ids, my_profile_ids)
+                                     .where.not(matches: { profile_a_id: hidden_ids })
+                                     .where.not(matches: { profile_b_id: hidden_ids })
                                      .includes(match: { profile_a: photos, profile_b: photos })
                                      .to_a
 
@@ -40,6 +43,17 @@ module Api
 
         conversation = Conversation.find_or_create_by!(match: match)
         render json: conversation_json(conversation, my_profile_ids), status: :created
+      end
+
+      # POST /api/v1/conversations/:id/read
+      def read
+        my_profile_ids = current_account.profiles.select(:id)
+        conversation = Conversation.joins(:match)
+                                   .merge(Match.where(profile_a_id: my_profile_ids).or(Match.where(profile_b_id: my_profile_ids)))
+                                   .find(params[:id])
+        conversation.messages.where(read_at: nil).where.not(sender_account_id: current_account.id)
+                    .update_all(read_at: Time.current)
+        head :no_content
       end
 
       private

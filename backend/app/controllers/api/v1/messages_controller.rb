@@ -4,22 +4,34 @@ module Api
       before_action :authenticate_account!
       before_action :set_conversation
       before_action :authorize_access!
+      rate_limit to: 60, within: 1.minute, only: :create, by: -> { current_account.id }, with: :rate_limited
 
+      DEFAULT_LIMIT = 30
+      MAX_LIMIT = 100
+
+      # Newest `limit` messages older than `before_id`, returned oldest
+      # first. Deliberately no read side effect: see ConversationsController#read.
       def index
-        @conversation.messages.where(read_at: nil).where.not(sender_account_id: current_account.id)
-                     .update_all(read_at: Time.current)
+        limit = (params[:limit].presence || DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
+        messages = @conversation.messages
+        messages = messages.where(id: ...params[:before_id].to_i) if params[:before_id].present?
 
-        render json: @conversation.messages.order(:sent_at).map { |m| message_json(m) }
+        render json: messages.order(id: :desc).limit(limit).reverse.map(&:api_json)
       end
 
       def create
+        participant_ids = [ @conversation.profile_a_id, @conversation.profile_b_id ]
+        if (participant_ids & current_account.hidden_profile_ids).any?
+          return render json: { error: "You can't message this profile" }, status: :forbidden
+        end
+
         message = @conversation.messages.new(
           sender_account: current_account,
           body: params[:body]
         )
 
         if message.save
-          render json: message_json(message), status: :created
+          render json: message.api_json, status: :created
         else
           render json: { errors: message.errors.full_messages }, status: :unprocessable_entity
         end
@@ -38,22 +50,11 @@ module Api
         return unless @conversation
 
         my_profile_ids = current_account.profiles.pluck(:id)
-        participant_ids = [@conversation.profile_a_id, @conversation.profile_b_id]
+        participant_ids = [ @conversation.profile_a_id, @conversation.profile_b_id ]
 
         unless (my_profile_ids & participant_ids).any?
           render json: { error: "Forbidden" }, status: :forbidden
         end
-      end
-
-      def message_json(message)
-        {
-          id: message.id,
-          conversation_id: message.conversation_id,
-          sender_account_id: message.sender_account_id,
-          body: message.body,
-          sent_at: message.sent_at,
-          read_at: message.read_at
-        }
       end
     end
   end

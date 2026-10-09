@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api";
 import { getProfile, getMyProfiles, sendInterest, Profile } from "@/lib/profiles";
 import { getVouches, Vouch } from "@/lib/vouches";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { SafetyActions } from "@/components/safety-actions";
 import { Button } from "@/components/ui/button";
 
 export default function ProfileDetailPage() {
   const { account } = useAuth();
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const profileId = Number(params.id);
 
@@ -19,6 +23,7 @@ export default function ProfileDetailPage() {
   const [activeProfileId, setActiveProfileId] = useState<number | null>(null);
   const [vouches, setVouches] = useState<Vouch[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState<"missing" | "failed" | null>(null);
 
   const [interestSent, setInterestSent] = useState(false);
   const [matchMessage, setMatchMessage] = useState("");
@@ -36,6 +41,9 @@ export default function ProfileDetailPage() {
       setVouches(v);
       const preselected = Number(searchParams.get("as"));
       setActiveProfileId(preselected && mine.some((m) => m.id === preselected) ? preselected : mine[0]?.id ?? null);
+    }).catch((err) => {
+      // 404 covers hidden, inactive, deleted, and blocked profiles alike.
+      setLoadError(err instanceof ApiError && err.status === 404 ? "missing" : "failed");
     }).finally(() => setLoadingData(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, profileId]);
@@ -56,7 +64,21 @@ export default function ProfileDetailPage() {
   }
 
   if (loadingData) return <p className="p-8">Loading...</p>;
+  if (loadError) {
+    return (
+      <div className="max-w-sm mx-auto px-8 py-20 text-center space-y-4">
+        <h1 className="font-display text-3xl">
+          {loadError === "missing" ? <>This profile isn&apos;t <em className="serif-italic text-primary">available.</em></> : "Something went wrong"}
+        </h1>
+        <p className="text-muted-foreground">
+          {loadError === "missing" ? "It may have been paused or removed." : "Please try again in a moment."}
+        </p>
+        <Link href="/discover"><Button variant="outline">Back to Discover</Button></Link>
+      </div>
+    );
+  }
   if (!account || !profile) return null;
+  const isMine = myProfiles.some((p) => p.id === profile.id);
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
@@ -103,7 +125,7 @@ export default function ProfileDetailPage() {
             )}
           </div>
 
-          {myProfiles.length > 0 && (
+          {myProfiles.length > 0 && !isMine && (
             <div className="pt-4 border-t border-border space-y-3">
               {myProfiles.length > 1 && (
                 <div>
@@ -152,6 +174,12 @@ export default function ProfileDetailPage() {
           </div>
         )}
       </div>
+
+      {!isMine && (
+        <div className="flex justify-center pt-2">
+          <SafetyActions profileId={profile.id} profileName={profile.name} onBlocked={() => router.replace("/discover")} />
+        </div>
+      )}
     </div>
   );
 }
