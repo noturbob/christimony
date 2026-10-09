@@ -1,0 +1,48 @@
+name: Android APK
+
+# Manually triggered: builds an installable release APK pointed at a given
+# Rails API and attaches it to the run. Release builds are still signed with
+# the debug key (android/app/build.gradle.kts) -- fine for testing, not for
+# the Play Store.
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "Rails API origin, e.g. https://christimony-api.up.railway.app"
+        required: true
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Write build config
+        env:
+          API_BASE_URL: ${{ inputs.api_base_url }}
+        run: |
+          api="${API_BASE_URL%/}"
+          cable="$(echo "$api" | sed -e 's#^https://#wss://#' -e 's#^http://#ws://#')/cable"
+          jq -n --arg api "$api" --arg cable "$cable" \
+            '{API_BASE_URL: $api, CABLE_URL: $cable, CABLE_ENABLED: true, FLAVOR: "prod"}' > config/apk.json
+          cat config/apk.json
+
+      - run: flutter build apk --release --dart-define-from-file=config/apk.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: christimony-apk
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
